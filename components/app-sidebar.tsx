@@ -1,133 +1,115 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import {
-  Settings2,
-  BookOpen,
-  Bot,
-  SquareTerminal,
-} from "lucide-react"
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from "@/components/ui/sidebar"
-import { NavUser } from "./nav-user"
-import { NavMain } from "./nav-main"
+import React from "react"
 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from "@/components/ui/sidebar"
+import Link from "next/link"
+import { NavUser } from "./nav-user"
+import { usePathname } from "next/navigation"
+
+// This is sample data.
 const data = {
   user: {
-    name: "stivluc",
+    name: "Steven Lucas",
     email: "contact@stivluc.com",
     avatar: "/avatars/newpp.png",
   },
   navMain: [
     {
-      title: "Playground",
+      title: "Dashboard",
       url: "#",
-      icon: SquareTerminal,
-      isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Vue d'ensemble",
+          url: "/",
         },
         {
-          title: "Starred",
-          url: "#",
+          title: "Détail par flux",
+          url: "/detail_flux",
         },
         {
-          title: "Settings",
-          url: "#",
+          title: "Détail par site",
+          url: "/detail_site",
         },
       ],
     },
     {
-      title: "Models",
+      title: "Anomalies",
       url: "#",
-      icon: Bot,
       items: [
         {
-          title: "Genesis",
-          url: "#",
+          title: "Liste des anomalies",
+          url: "/liste_anomalies",
         },
         {
-          title: "Explorer",
-          url: "#",
+          title: "Evolution temporelle",
+          url: "/evolution_temporelle",
         },
         {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
+          title: "Alertes et incidents",
+          url: "/alertes_incidents",
         },
       ],
     },
   ],
 }
 
-export function AppSidebar() {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
 
   return (
-    <Sidebar>
-      <SidebarHeader className="border-b px-4 py-2 h-16 flex items-center justify-center">
+    <Sidebar {...props}>
+      <SidebarHeader className="px-4 py-2 h-16 flex items-center justify-start">
         <Link href="/" className="flex items-center h-full">
           <img
             src="/castorama_logo.png"
             alt="Castorama Logo"
-            className="h-full w-auto object-contain"
+            className="h-10 w-auto object-contain"
           />
         </Link>
       </SidebarHeader>
-      <SidebarContent>
-      <NavMain items={data.navMain} />
+      <SidebarContent className="pt-0">
+        {/* We create a SidebarGroup for each parent. */}
+        {data.navMain.map((item) => (
+          <SidebarGroup key={item.title}>
+            <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {item.items.map((navItem) => {
+                  // Check if the current pathname starts with the nav item's URL for active status
+                  const isActive = pathname.startsWith(navItem.url) && (navItem.url !== '/' || pathname === '/' || pathname === '/(authenticated)');
+                  return (
+                    <SidebarMenuItem key={navItem.title}>
+                      <SidebarMenuButton asChild isActive={isActive}>
+                        <Link href={navItem.url}>{navItem.title}</Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   )
 }
+
+
+
