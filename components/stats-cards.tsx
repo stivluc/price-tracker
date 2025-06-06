@@ -28,7 +28,7 @@ export function StatsCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            En augmentation le mois dernier <IconTrendingUp className="size-4" />
+            Tend à augmenter <IconTrendingUp className="size-4" />
           </div>
           <div className="text-muted-foreground">
             Lignes traitées par jour
@@ -37,7 +37,7 @@ export function StatsCards() {
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Taux de concordance global</CardDescription>
+          <CardDescription>Concordance globale</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
             96,4%
           </CardTitle>
@@ -50,7 +50,7 @@ export function StatsCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Moins 1,2% sur la dernière période <IconTrendingDown className="size-4" />
+            En baisse sur la période<IconTrendingDown className="size-4" />
           </div>
           <div className="text-muted-foreground">
             Flow A nécessite une attention particulière
@@ -72,7 +72,7 @@ export function StatsCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            En augmentation la semaine passée<IconTrendingUp className="size-4" />
+            Augmentation significative<IconTrendingUp className="size-4" />
           </div>
           <div className="text-muted-foreground">Flow C vers Site 2 a le plus de divergences</div>
         </CardFooter>
@@ -92,7 +92,7 @@ export function StatsCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Augmentation du delta le mois dernier<IconTrendingUp className="size-4" />
+            Augmentation le mois dernier<IconTrendingUp className="size-4" />
           </div>
           <div className="text-muted-foreground">Le plus grand delta est de 48,5%</div>
         </CardFooter>

@@ -6,10 +6,6 @@ import { Heatmap } from "@/components/heatmap"
 import { StatusBanner } from "@/components/status-banner"
 
 export default function HomePage() {
-  const totalRecords = 123456
-  const matchRate = 86.4
-  const discrepancies = 2345
-  const avgDelta = 4.2
 
   const flows = ["Flow A", "Flow B", "Flow C"]
   const sites = ["Site 1", "Site 2", "Site 3"]
