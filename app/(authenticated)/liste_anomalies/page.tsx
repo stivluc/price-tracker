@@ -10,8 +10,9 @@ import {
   getSortedRowModel,
   SortingState,
   useReactTable,
+  GlobalFilterFn,
 } from '@tanstack/react-table'
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +31,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { SortableColumnHeader } from '@/components/sortable-column-header'
 import {
   IconExternalLink,
@@ -47,24 +58,25 @@ type Anomaly = {
   priceTarget: number
   delta: number
   validityDate: string
-  status: 'Critique' | 'Alerte' | 'Ok'
+  status: 'Alerte' | 'Critique'
 }
 
 const generateData = (): Anomaly[] => {
   const sites = ['Site 1', 'Site 2', 'Site 3']
   const flows = ['Flow A', 'Flow B', 'Flow C']
-  const statuses: Anomaly['status'][] = ['Critique', 'Alerte', 'Ok']
+  const statuses: Anomaly['status'][] = ['Alerte', 'Critique']
   const data: Anomaly[] = []
 
   for (let i = 1; i <= 100; i++) {
     const priceSource = +(Math.random() * 100).toFixed(2)
     const priceTarget = +(Math.random() * 100).toFixed(2)
     const delta = +(priceTarget - priceSource).toFixed(2)
+    const ean = Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0')
 
     data.push({
       id: i,
       articleNumber: `ART-${1000 + i}`,
-      ean: `${8000000000000 + i}`,
+      ean,
       site: sites[Math.floor(Math.random() * sites.length)],
       flowType: flows[Math.floor(Math.random() * flows.length)],
       priceSource,
@@ -79,104 +91,131 @@ const generateData = (): Anomaly[] => {
   return data
 }
 
+// Custom global filter function for article number and EAN
+const articleEanFilter: GlobalFilterFn<Anomaly> = (
+  row,
+  columnId,
+  filterValue
+) => {
+  const search = filterValue.toLowerCase()
+  const articleNumber = row.getValue<string>('articleNumber').toLowerCase()
+  const ean = row.getValue<string>('ean').toLowerCase()
+
+  return articleNumber.includes(search) || ean.includes(search)
+}
+
 export default function ListeAnomaliesPage() {
-  const [data] = useState(() => generateData())
+  const [data, setData] = useState<Anomaly[]>([])
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const pageSize = 15
+  const [globalFilter, setGlobalFilter] = useState('')
+  const pageSize = 10
+  const [showDialog, setShowDialog] = useState(false)
+  const [dialogContent, setDialogContent] = useState({ title: '', description: '' })
+  const [csvDownloaded, setCsvDownloaded] = useState(false)
 
-  const columns: ColumnDef<Anomaly>[] = [
-    {
-      accessorKey: 'articleNumber',
-      header: ({ column }) => (
-        <SortableColumnHeader column={column} title='ARTICLE_NUMBER' />
-      ),
-    },
-    {
-      accessorKey: 'ean',
-      header: ({ column }) => (
-        <SortableColumnHeader column={column} title='EAN' />
-      ),
-    },
-    {
-      accessorKey: 'site',
-      header: ({ column }) => (
-        <SortableColumnHeader column={column} title='SITE' />
-      ),
-    },
-    {
-      accessorKey: 'flowType',
-      header: ({ column }) => (
-        <SortableColumnHeader column={column} title='FLOW_TYPE' />
-      ),
-    },
-    {
-      accessorKey: 'priceSource',
-      header: ({ column }) => (
-        <SortableColumnHeader column={column} title='PRICE_SOURCE' />
-      ),
-    },
-    {
-      accessorKey: 'priceTarget',
-      header: ({ column }) => (
-        <SortableColumnHeader column={column} title='PRICE_TARGET' />
-      ),
-    },
-    {
-      accessorKey: 'delta',
-      header: ({ column }) => (
-        <SortableColumnHeader column={column} title='delta' />
-      ),
-      cell: ({ row }) => `${row.getValue<number>('delta').toFixed(2)}%`,
-      filterFn: (row, columnId, value) => {
-        const deltaValue = row.getValue<number>(columnId)
-        return deltaValue > parseFloat(value)
+  useEffect(() => {
+    setData(generateData())
+  }, [])
+
+  const columns: ColumnDef<Anomaly>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'articleNumber',
+        header: ({ column }) => (
+          <SortableColumnHeader column={column} title='Article' />
+        ),
       },
-    },
-    {
-      accessorKey: 'validityDate',
-      header: ({ column }) => (
-        <SortableColumnHeader column={column} title='date de validité' />
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: ({ column }) => (
-        <SortableColumnHeader column={column} title='STATUS' />
-      ),
-      cell: ({ row }) => {
-        const value = row.getValue<Anomaly['status']>('status')
-        const statusClasses = {
-          Ok: 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400',
-          Alerte:
-            'bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400',
-          Critique:
-            'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400',
+      {
+        accessorKey: 'ean',
+        header: ({ column }) => (
+          <SortableColumnHeader column={column} title='EAN' />
+        ),
+      },
+      {
+        accessorKey: 'site',
+        header: ({ column }) => (
+          <SortableColumnHeader column={column} title='Site' />
+        ),
+      },
+      {
+        accessorKey: 'flowType',
+        header: ({ column }) => (
+          <SortableColumnHeader column={column} title='Flow' />
+        ),
+      },
+      {
+        accessorKey: 'priceSource',
+        header: ({ column }) => (
+          <SortableColumnHeader column={column} title='Prix source' />
+        ),
+      },
+      {
+        accessorKey: 'priceTarget',
+        header: ({ column }) => (
+          <SortableColumnHeader column={column} title='Prix cible' />
+        ),
+      },
+      {
+        accessorKey: 'delta',
+        header: ({ column }) => (
+          <SortableColumnHeader column={column} title='Delta' />
+        ),
+        cell: ({ row }) => `${row.getValue<number>('delta').toFixed(2)}%`,
+        filterFn: (row, columnId, value) => {
+          const deltaValue = row.getValue<number>(columnId)
+          return deltaValue > parseFloat(value)
+        },
+      },
+      {
+        accessorKey: 'validityDate',
+        header: ({ column }) => (
+          <SortableColumnHeader column={column} title='Date de validité' />
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: ({ column }) => (
+          <SortableColumnHeader column={column} title='Statut' />
+        ),
+        cell: ({ row }) => {
+          const value = row.getValue<Anomaly['status']>('status')
+          const statusClasses = {
+            Alerte:
+              'bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400',
+            Critique:
+              'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400',
+          }
+          return (
+            <Badge variant='outline' className={statusClasses[value]}>
+              {value}
+            </Badge>
+          )
+        },
+        filterFn: (row, columnId, value) => {
+            const status = row.getValue<Anomaly['status']>(columnId);
+            return value === 'all' || status === value;
         }
-        return (
-          <Badge variant='outline' className={statusClasses[value]}>
-            {value}
-          </Badge>
-        )
       },
-    },
-    {
-      id: 'ticket',
-      header: () => 'Ticket',
-      cell: () => (
-        <Button
-          variant='ghost'
-          size='icon'
-          className='hover:bg-muted/50'
-          asChild
-        >
-          <a href='#' aria-label='Ouvrir le ticket'>
-            <IconExternalLink className='size-4' />
-          </a>
-        </Button>
-      ),
-    },
-  ]
+      {
+        id: 'ticket',
+        header: () => 'Ticket',
+        cell: () => (
+          <Button
+            variant='ghost'
+            size='icon'
+            className='hover:bg-muted/50'
+            asChild
+          >
+            <a href='#' aria-label='Ouvrir le ticket'>
+              <IconExternalLink className='size-4' />
+            </a>
+          </Button>
+        ),
+      },
+    ],
+    [] // Memoize columns
+  )
 
   const table = useReactTable({
     data,
@@ -187,9 +226,12 @@ export default function ListeAnomaliesPage() {
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: articleEanFilter,
     state: {
       sorting,
       columnFilters,
+      globalFilter,
     },
     initialState: {
       pagination: {
@@ -199,67 +241,90 @@ export default function ListeAnomaliesPage() {
   })
 
   const exportCSV = () => {
-    const headers = columns
-      .filter((c) => c.accessorKey)
-      .map((c) => c.accessorKey)
-      .join(',')
-    const rows = table.getFilteredRowModel().rows.map((row) =>
-      columns
-        .filter((c) => c.accessorKey)
-        .map((c) => String(row.getValue(c.accessorKey as keyof Anomaly)))
-        .join(',')
-    )
-    const csvContent = [headers, ...rows].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', 'anomalies.csv')
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+    // Explicitly filter for columns with accessorKey and cast them
+    const dataColumns = columns.filter(
+      (column): column is ColumnDef<Anomaly> & { accessorKey: keyof Anomaly } =>
+      'accessorKey' in column && column.accessorKey !== undefined
+    );
+
+    const headers = dataColumns.map(column => String(column.header)).join(',');
+
+    const rows = table.getFilteredRowModel().rows.map(row =>
+        dataColumns.map(column => String(row.getValue(column.accessorKey))).join(',')
+    );
+
+    const csvContent = [headers, ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'anomalies.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setCsvDownloaded(true);
+    setTimeout(() => {
+      setCsvDownloaded(false);
+    }, 3000);
+  };
 
   const exportPDF = () => {
-    alert('Export PDF non disponible dans cette démo')
+    setDialogContent({
+      title: "Export PDF",
+      description: "L'export PDF n'est pas disponible dans la démo."
+    })
+    setShowDialog(true)
   }
 
   return (
     <div className='px-4 lg:px-6'>
       <h1 className='text-2xl font-bold ml-2 mt-6'>Liste des anomalies</h1>
 
+      <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dialogContent.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dialogContent.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowDialog(false)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className='flex flex-wrap items-end gap-4 py-4'>
         <Input
-          placeholder='Filtrer par article...'
-          value={(table.getColumn('articleNumber')?.getFilterValue() as string) ?? ''}
-          onChange={(event) =>
-            table.getColumn('articleNumber')?.setFilterValue(event.target.value)
-          }
+          placeholder='Rechercher par article ou EAN...'
+          value={globalFilter ?? ''}
+          onChange={(event) => setGlobalFilter(event.target.value)}
           className='max-w-xs'
         />
         <Select
-          onValueChange={(value) => table.getColumn('flowType')?.setFilterValue(value)}
-          value={(table.getColumn('flowType')?.getFilterValue() as string) ?? ''}
+          onValueChange={(value) => table.getColumn('flowType')?.setFilterValue(value === 'all' ? '' : value)}
+          value={(table.getColumn('flowType')?.getFilterValue() as string) ?? 'all'}
         >
-          <SelectTrigger className='w-32'>
-            <SelectValue placeholder='Flux' />
+          <SelectTrigger className='w-40'>
+            <SelectValue placeholder='Type de flux' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value=''>Tous</SelectItem>
+            <SelectItem value='all'>Tous les flux</SelectItem>
             <SelectItem value='Flow A'>Flow A</SelectItem>
             <SelectItem value='Flow B'>Flow B</SelectItem>
             <SelectItem value='Flow C'>Flow C</SelectItem>
           </SelectContent>
         </Select>
         <Select
-          onValueChange={(value) => table.getColumn('site')?.setFilterValue(value)}
-          value={(table.getColumn('site')?.getFilterValue() as string) ?? ''}
+          onValueChange={(value) => table.getColumn('site')?.setFilterValue(value === 'all' ? '' : value)}
+          value={(table.getColumn('site')?.getFilterValue() as string) ?? 'all'}
         >
-          <SelectTrigger className='w-32'>
+          <SelectTrigger className='w-40'>
             <SelectValue placeholder='Site' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value=''>Tous</SelectItem>
+            <SelectItem value='all'>Tous les sites</SelectItem>
             <SelectItem value='Site 1'>Site 1</SelectItem>
             <SelectItem value='Site 2'>Site 2</SelectItem>
             <SelectItem value='Site 3'>Site 3</SelectItem>
@@ -272,29 +337,33 @@ export default function ListeAnomaliesPage() {
           onChange={(event) =>
             table.getColumn('delta')?.setFilterValue(event.target.value)
           }
-          className='w-24'
+          className='w-32'
         />
         <Select
-          onValueChange={(value) => table.getColumn('status')?.setFilterValue(value)}
-          value={(table.getColumn('status')?.getFilterValue() as string) ?? ''}
+          onValueChange={(value) => table.getColumn('status')?.setFilterValue(value === 'all' ? '' : value)}
+          value={(table.getColumn('status')?.getFilterValue() as string) ?? 'all'}
         >
-          <SelectTrigger className='w-32'>
+          <SelectTrigger className='w-40'>
             <SelectValue placeholder='Statut' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value=''>Tous</SelectItem>
-            <SelectItem value='Ok'>Ok</SelectItem>
+            <SelectItem value='all'>Tous les statuts</SelectItem>
             <SelectItem value='Alerte'>Alerte</SelectItem>
             <SelectItem value='Critique'>Critique</SelectItem>
           </SelectContent>
         </Select>
-        <div className='ml-auto flex gap-2'>
-          <Button variant='outline' size='sm' onClick={exportCSV}>
-            <IconFileTypeCsv className='mr-1 size-4' /> CSV
-          </Button>
-          <Button variant='outline' size='sm' onClick={exportPDF}>
-            <IconFileTypePdf className='mr-1 size-4' /> PDF
-          </Button>
+        <div className='ml-auto flex flex-col items-end gap-2'>
+          <div className='flex gap-2'>
+            <Button variant='outline' size='sm' onClick={exportCSV}>
+              <IconFileTypeCsv className='mr-1 size-4' /> CSV
+            </Button>
+            <Button variant='outline' size='sm' onClick={exportPDF}>
+              <IconFileTypePdf className='mr-1 size-4' /> PDF
+            </Button>
+          </div>
+          {csvDownloaded && (
+            <span className='text-sm text-green-600 dark:text-green-400'>Téléchargé!</span>
+          )}
         </div>
       </div>
 
@@ -318,15 +387,28 @@ export default function ListeAnomaliesPage() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const delta = row.getValue<number>('delta')
+                const rowClassName = Math.abs(delta) > 30
+                  ? 'bg-red-50 dark:bg-red-950/20'
+                  : Math.abs(delta) > 15
+                    ? 'bg-orange-50 dark:bg-orange-950/20'
+                    : ''
+
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    className={rowClassName}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="py-2">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className='h-24 text-center'>

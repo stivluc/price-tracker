@@ -13,7 +13,7 @@ function SortableColumnHeader<TData>({ column, title, className }: SortableColum
   return (
     <Button
       variant="ghost"
-      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      onClick={() => column.toggleSorting()}
       className={`text-left p-0 hover:bg-transparent ${className}`}
     >
       {title}
