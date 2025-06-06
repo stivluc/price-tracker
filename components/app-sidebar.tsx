@@ -37,13 +37,10 @@ const data = {
           url: "/",
         },
         {
-          title: "Détail par flux",
-          url: "/detail_flux",
+          title: "Détail par flux et site",
+          url: "/detail_flux_site",
         },
-        {
-          title: "Détail par site",
-          url: "/detail_site",
-        },
+
       ],
     },
     {
