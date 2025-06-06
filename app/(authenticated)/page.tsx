@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { StatsCard } from "@/components/stats-card"
+import { StatsCards } from "@/components/stats-cards"
 import { Heatmap } from "@/components/heatmap"
 import { StatusBanner } from "@/components/status-banner"
 
@@ -20,20 +20,14 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="flex flex-col w-full h-full">
-      <main className="flex-1 overflow-auto p-4">
-        <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-bold mb-8">Dashboard</h1>
-          <div className="grid auto-rows-min gap-4 md:grid-cols-4">
-            <StatsCard title="Enregistrements" value={totalRecords} />
-            <StatsCard title="% concordance" value={`${matchRate}%`} />
-            <StatsCard title="Discrepancies" value={discrepancies} />
-            <StatsCard title="Delta moyen" value={avgDelta} />
-          </div>
+    <div className="flex flex-1 flex-col">
+    <div className="@container/main flex flex-1 flex-col gap-2">
+      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+        <StatsCards />
           <Heatmap data={data} rows={flows} cols={sites} />
           <StatusBanner value={100 - matchRate} />
+          </div>
+          </div>
         </div>
-      </main>
-    </div>
   )
 }

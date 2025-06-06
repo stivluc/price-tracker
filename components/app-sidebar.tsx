@@ -18,6 +18,7 @@ import {
 import Link from "next/link"
 import { NavUser } from "./nav-user"
 import { usePathname } from "next/navigation"
+import { ScanEye } from "lucide-react"
 
 // This is sample data.
 const data = {
@@ -70,15 +71,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
 
   return (
-    <Sidebar {...props}>
-      <SidebarHeader className="px-4 py-2 h-16 flex items-center justify-start">
-        <Link href="/" className="flex items-center h-full">
-          <img
-            src="/castorama_logo.png"
-            alt="Castorama Logo"
-            className="h-10 w-auto object-contain"
-          />
-        </Link>
+    <Sidebar {...props} collapsible="offcanvas" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="#">
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <ScanEye className="size-4" />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-medium">Price Tracker</span>
+                  <span className="">v1.0.0</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="pt-0">
         {/* We create a SidebarGroup for each parent. */}
