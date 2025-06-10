@@ -44,7 +44,7 @@ export function SimpleLineChart({
           key={i}
           d={buildPath(s.data)}
           fill="none"
-          stroke={s.color || `var(--chart-${i + 1})`}
+          stroke={s.color || `var(--color-chart-${i + 1})`}
           strokeWidth={2}
           strokeDasharray={s.dashed ? "4 2" : undefined}
         />
