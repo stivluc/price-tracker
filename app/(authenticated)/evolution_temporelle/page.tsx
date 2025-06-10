@@ -53,7 +53,7 @@ export default function EvolutionTemporellePage() {
               <div key={i} className='flex items-center gap-1'>
                 <span
                   className='h-2 w-2 rounded-full'
-                  style={{ backgroundColor: `var(--chart-${i + 1})` }}
+                  style={{ backgroundColor: `var(--color-chart-${i + 1})` }}
                 />
                 {s.label}
               </div>
