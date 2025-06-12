@@ -10,7 +10,7 @@ import {
   getSortedRowModel,
   SortingState,
   useReactTable,
-  GlobalFilterFn,
+  Row,
 } from '@tanstack/react-table'
 import { useState, useEffect, useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -39,7 +39,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { SortableColumnHeader } from '@/components/sortable-column-header'
 import {
@@ -92,10 +91,10 @@ const generateData = (): Anomaly[] => {
 }
 
 // Custom global filter function for article number and EAN
-const articleEanFilter: GlobalFilterFn<Anomaly> = (
-  row,
-  columnId,
-  filterValue
+const articleEanFilter = (
+  row: Row<Anomaly>,
+  columnId: string,
+  filterValue: string
 ) => {
   const search = filterValue.toLowerCase()
   const articleNumber = row.getValue<string>('articleNumber').toLowerCase()
@@ -112,7 +111,6 @@ export default function ListeAnomaliesPage() {
   const pageSize = 10
   const [showDialog, setShowDialog] = useState(false)
   const [dialogContent, setDialogContent] = useState({ title: '', description: '' })
-  const [csvDownloaded, setCsvDownloaded] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadSuccess, setDownloadSuccess] = useState(false)
 
@@ -387,9 +385,6 @@ export default function ListeAnomaliesPage() {
               <IconFileTypePdf className='mr-1 size-4' /> PDF
             </Button>
           </div>
-          {csvDownloaded && (
-            <span className='text-sm text-green-600 dark:text-green-400'>Téléchargé!</span>
-          )}
         </div>
       </div>
 

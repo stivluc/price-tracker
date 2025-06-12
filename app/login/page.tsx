@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { LoginForm } from "@/components/login-form"
 
 export default function LoginPage() {
@@ -6,9 +7,11 @@ export default function LoginPage() {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center">
-            <img
+            <Image
               src="/castorama_logo.png"
               alt="Castorama Logo"
+              width={128}
+              height={32}
               className="h-8 w-auto"
             />
           </a>
@@ -20,10 +23,11 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="bg-muted relative hidden lg:block">
-        <img
+        <Image
           src="/castorama_auth_illustration.jpg"
           alt="Authentication illustration"
-          className="absolute inset-0 h-full w-full object-cover brightness-[0.8] dark:brightness-[0.2] dark:grayscale"
+          fill
+          className="object-cover brightness-[0.8] dark:brightness-[0.2] dark:grayscale"
         />
       </div>
     </div>

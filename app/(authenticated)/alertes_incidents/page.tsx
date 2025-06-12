@@ -86,7 +86,7 @@ export interface TimelineEntry {
 }
 
 // Generate dummy alerts
-export const generateAlerts = (): AlertIncident[] => {
+const generateAlerts = (): AlertIncident[] => {
   const flows = ['Flow A', 'Flow B', 'Flow C']
   const sites = ['Site 1', 'Site 2', 'Site 3']
   const urgencies: AlertIncident['urgency'][] = ['Info', 'Avertissement', 'Critique']
@@ -120,7 +120,7 @@ export const generateAlerts = (): AlertIncident[] => {
 }
 
 // Incident timeline data
-export const generateTimeline = (): TimelineEntry[] => {
+const generateTimeline = (): TimelineEntry[] => {
   const data: TimelineEntry[] = []
   const now = new Date()
   for (let i = 29; i >= 0; i--) {
@@ -135,7 +135,7 @@ export const generateTimeline = (): TimelineEntry[] => {
 }
 
 // Global search filter
-export const globalFilter = (
+const globalFilter = (
   row: Row<AlertIncident>,
   columnId: string,
   value: string
@@ -276,7 +276,7 @@ export default function AlertesIncidentsPage() {
         ),
       },
     ],
-    [data]
+    []
   )
 
   const table = useReactTable({

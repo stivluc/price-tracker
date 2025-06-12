@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async () => {
     // Dummy authentication - any credentials will work
     Cookies.set("isAuthenticated", "true", { expires: 7 }) // Expires in 7 days
     setIsAuthenticated(true)
