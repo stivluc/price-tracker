@@ -19,6 +19,7 @@ interface MultiSelectProps {
   className?: string;
   labelKey: string;
   valueKey: string;
+  maxSelections?: number;
 }
 
 function MultiSelect({
@@ -31,14 +32,21 @@ function MultiSelect({
   className,
   labelKey,
   valueKey,
+  maxSelections,
 }: MultiSelectProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
 
   const handleSelect = (value: string) => {
+    if (maxSelections != null && maxSelections > 0 && selected.length >= maxSelections && !selected.includes(value)) {
+      // If max selections reached and trying to add a new item, do nothing
+      return;
+    }
+
     if (selected.includes(value)) {
-      onSelectedChange(selected.filter((item) => item !== value));
+      // Only allow removal through the badge X button, not by clicking in the list
+      return;
     } else {
       onSelectedChange([...selected, value]);
     }
@@ -52,6 +60,8 @@ function MultiSelect({
     const matchesSearch = item[labelKey].toLowerCase().includes(query.toLowerCase());
     return isNotSelected && matchesSearch;
   });
+
+  const isMaxSelectionsReached = maxSelections != null && maxSelections > 0 && selected.length >= maxSelections;
 
   return (
     <div className={className}>
@@ -74,15 +84,21 @@ function MultiSelect({
               onValueChange={setQuery}
               placeholder={searchPlaceholder}
               className="h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isMaxSelectionsReached}
             />
             <CommandList>
               <CommandGroup>
-                {filteredItems.length > 0 ? (
+                {isMaxSelectionsReached ? (
+                  <div className="py-6 text-center">
+                    <p className="text-sm text-muted-foreground">Nombre maximal de sélections atteint (5)</p>
+                  </div>
+                ) : filteredItems.length > 0 ? (
                   filteredItems.map((item) => (
                     <CommandItem
                       key={item[valueKey]}
                       value={item[valueKey]}
                       onSelect={() => handleSelect(item[valueKey])}
+                      disabled={isMaxSelectionsReached}
                     >
                       {item[labelKey]}
                     </CommandItem>

@@ -1,14 +1,14 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
-  AreaChart,
-  Area,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
 } from 'recharts'
 import {
   ChartConfig,
@@ -23,6 +23,7 @@ import { MultiSelect } from '@/components/ui/multi-select'
 import * as React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { X } from 'lucide-react'
+import ForecastChart from '@/components/forecast-chart'
 
 // Define types for chart data
 type MismatchData = {
@@ -38,8 +39,17 @@ type ComplianceData = {
 // Generate dummy data (replace with actual data fetching later)
 const generateMismatchData = (): MismatchData[] => {
   const data: MismatchData[] = [];
-  const flows = ['Flow A', 'Flow B', 'Flow C', 'Flow D', 'Flow E', 'Flow F', 'Flow G', 'Flow H'];
+  const flows = ['Flux A', 'Flux B', 'Flux C', 'Flux D', 'Flux E', 'Flux F', 'Flux G', 'Flux H'];
   const startDate = new Date('2023-08-01');
+
+  // Initialize base values for each flow
+  const baseValues = flows.reduce((acc, flow) => {
+    acc[flow] = Math.floor(Math.random() * 50) + 50; // Start between 50 and 100
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Initialize previous values for smoothing
+  const prevValues = { ...baseValues };
 
   for (let i = 0; i < 120; i++) {
     const currentDate = new Date(startDate);
@@ -48,7 +58,18 @@ const generateMismatchData = (): MismatchData[] => {
 
     const entry: MismatchData = { date: dateString };
     flows.forEach(flow => {
-      entry[flow] = Math.floor(Math.random() * 200);
+      // Generate a small random change (-5 to +5)
+      const change = (Math.random() - 0.5) * 10;
+      
+      // Apply smoothing: new value is 80% previous + 20% new target
+      const targetValue = prevValues[flow] + change;
+      const newValue = Math.round(prevValues[flow] * 0.8 + targetValue * 0.2);
+      
+      // Ensure value stays within reasonable bounds (30 to 150)
+      entry[flow] = Math.max(30, Math.min(150, newValue));
+      
+      // Update previous value for next iteration
+      prevValues[flow] = entry[flow];
     });
     data.push(entry);
   }
@@ -58,16 +79,22 @@ const generateMismatchData = (): MismatchData[] => {
 const generateComplianceData = (): ComplianceData[] => {
   const data: ComplianceData[] = [];
   const startDate = new Date('2023-08-01');
-  let currentCompliance = 80;
+  let currentCompliance = 85; // Start at 85%
 
   for (let i = 0; i < 120; i++) {
     const currentDate = new Date(startDate);
     currentDate.setDate(startDate.getDate() + i);
     const dateString = currentDate.toISOString().slice(0, 10);
 
-    // Simulate rolling compliance change with smaller variations
-    const change = (Math.random() - 0.5) * 0.5;
-    currentCompliance = Math.max(75, Math.min(90, currentCompliance + change));
+    // Simulate more pronounced variations
+    const change = (Math.random() - 0.5) * 2; // Increased variation range
+    currentCompliance = Math.max(75, Math.min(95, currentCompliance + change));
+
+    // Add occasional larger variations (every ~20 days)
+    if (i % 20 === 0) {
+      const largeChange = (Math.random() - 0.5) * 5;
+      currentCompliance = Math.max(75, Math.min(95, currentCompliance + largeChange));
+    }
 
     data.push({
       date: dateString,
@@ -87,26 +114,12 @@ const complianceChartConfig = {
   },
 } satisfies ChartConfig;
 
-// A more extensive color palette for flows
-// const flowColors = [
-//   'hsl(var(--chart-1))',
-//   'hsl(var(--chart-2))',
-//   'hsl(var(--chart-3))',
-//   'hsl(var(--chart-4))',
-//   'hsl(var(--chart-5))',
-//   'hsl(var(--chart-6))',
-//   'hsl(var(--chart-7))',
-//   'hsl(var(--chart-8))',
-//   'hsl(var(--chart-9))',
-//   'hsl(var(--chart-10))',
-// ];
-
 export default function EvolutionTemporellePage() {
   const [mismatchData, setMismatchData] = React.useState<MismatchData[]>([]);
   const [complianceData, setComplianceData] = React.useState<ComplianceData[]>([]);
   const [timeRange, setTimeRange] = React.useState('90d');
   const allFlows = React.useMemo(() => Object.keys(allMismatchData[0] || {}).filter(key => key !== 'date'), []);
-  const [selectedFlows, setSelectedFlows] = React.useState<string[]>(allFlows);
+  const [selectedFlows, setSelectedFlows] = React.useState<string[]>(allFlows.slice(0, 3));
 
   React.useEffect(() => {
     // Filter data based on time range
@@ -144,14 +157,14 @@ export default function EvolutionTemporellePage() {
     setMismatchData(processedMismatchData);
     setComplianceData(filteredCompliance);
 
-  }, [timeRange, selectedFlows, allFlows]); // Add allFlows to dependency array
+  }, [timeRange, selectedFlows, allFlows]);
 
-  // Dynamically generate mismatch chart config based on selected flows and colors
+  // Dynamically generate mismatch chart config based on selected flows
   const mismatchChartConfig = React.useMemo(() => {
     return selectedFlows.reduce((config, flowType, index) => {
       config[flowType] = {
-        label: flowType.replace('Flow', 'Flux '),
-        color: `var(--color-chart-${(index % 10) + 1})`, // Directly use var(--color-chart-X)
+        label: flowType,
+        color: `var(--chart-${index + 1})`,
       };
       return config;
     }, {} as ChartConfig);
@@ -159,7 +172,7 @@ export default function EvolutionTemporellePage() {
 
   // Prepare items for MultiSelect
   const flowMultiSelectItems = React.useMemo(() => {
-    return allFlows.map(flow => ({ label: flow.replace('Flow', 'Flux '), value: flow }));
+    return allFlows.map(flow => ({ label: flow, value: flow }));
   }, [allFlows]);
 
   return (
@@ -173,14 +186,15 @@ export default function EvolutionTemporellePage() {
           <div className="flex items-center gap-4">
             <MultiSelect
               items={flowMultiSelectItems}
-              selected={selectedFlows}
-              onSelectedChange={setSelectedFlows}
+              selected={selectedFlows.slice(0,5)}
+              onSelectedChange={(newSelected) => setSelectedFlows(newSelected.slice(0,5))}
               placeholder="Sélectionner les flux"
               searchPlaceholder="Rechercher un flux..."
               emptyText="Aucun flux trouvé."
               labelKey="label"
               valueKey="value"
               className="w-[200px]"
+              maxSelections={5}
             />
             <Select value={timeRange} onValueChange={setTimeRange}>
               <SelectTrigger className="w-[160px]">
@@ -219,30 +233,7 @@ export default function EvolutionTemporellePage() {
             })}
           </div>
           <ChartContainer config={mismatchChartConfig} className="aspect-auto h-[300px] w-full">
-            <AreaChart data={mismatchData}>
-              <defs>
-                {selectedFlows.map((flowType, index) => (
-                  <linearGradient
-                    key={flowType}
-                    id={`fill${flowType}`}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="5%"
-                      stopColor={mismatchChartConfig[flowType]?.color}
-                      stopOpacity={0.8}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor={mismatchChartConfig[flowType]?.color}
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
-                ))}
-              </defs>
+            <BarChart data={mismatchData}>
               <CartesianGrid strokeDasharray='3 3' />
               <XAxis
                 dataKey='date'
@@ -258,28 +249,24 @@ export default function EvolutionTemporellePage() {
               <YAxis />
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
               {selectedFlows.map((flowType, index) => (
-                <Area
+                <Bar
                   key={flowType}
-                  type='monotone'
                   dataKey={flowType}
-                  fill={`url(#fill${flowType})`}
-                  stroke={mismatchChartConfig[flowType]?.color}
-                  stackId="1"
-                  dot={false}
-                  activeDot={false}
+                  fill={`var(--chart-${index + 1})`}
+                  stackId="a"
                 />
               ))}
               <ChartLegend 
                 content={({ payload }) => (
                   <div className="flex flex-wrap gap-4 justify-center mt-4">
-                    {payload?.map((entry, index) => {
+                    {payload?.map((entry) => {
                       const flowType = entry.value as string;
                       const config = mismatchChartConfig[flowType];
                       return (
                         <div key={flowType} className="flex items-center gap-2">
                           <div 
                             className="w-3 h-3 rounded-sm" 
-                            style={{ backgroundColor: config?.color }}
+                            style={{ backgroundColor: `var(--chart-${selectedFlows.indexOf(flowType) + 1})` }}
                           />
                           <span className="text-sm">{config?.label}</span>
                         </div>
@@ -288,64 +275,61 @@ export default function EvolutionTemporellePage() {
                   </div>
                 )}
               />
-            </AreaChart>
+            </BarChart>
           </ChartContainer>
         </CardContent>
       </Card>
 
       {/* Compliance Rate Chart: Rolling 7-day */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
+        <Card className="h-full flex flex-col">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Taux de conformité rolling 7 jours</CardTitle>
+            <CardDescription className="text-muted-foreground">Évolution du taux de conformité sur les 7 derniers jours.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={complianceChartConfig} className="aspect-auto h-[300px] w-full">
-              <LineChart data={complianceData}>
+          <CardContent className="flex-grow">
+            <ChartContainer config={complianceChartConfig} className="h-full w-full">
+              <AreaChart data={complianceData}>
+                <defs>
+                  <linearGradient id="complianceGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray='3 3' />
-                 <XAxis
+                <XAxis
                   dataKey='date'
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
+                  interval={timeRange === '90d' ? 14 : timeRange === '30d' ? 5 : 1}
                   tickFormatter={(value) => {
                     const date = new Date(value);
                     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
                   }}
                 />
-                <YAxis domain={[0, 100]} label={{ value: 'Taux (%)', angle: -90, position: 'insideLeft' }} />
+                <YAxis 
+                  domain={[70, 100]} 
+                  label={{ value: 'Taux (%)', angle: -90, position: 'insideLeft' }} 
+                  tickCount={7}
+                />
                 <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                <Line
-                  type='monotone'
-                  dataKey='complianceRate'
-                  stroke={complianceChartConfig.complianceRate.color}
+                <Area
+                  type="monotone"
+                  dataKey="complianceRate"
+                  fill="url(#complianceGradient)"
+                  stroke="var(--chart-1)"
                   dot={false}
                   activeDot={false}
                 />
                 <ChartLegend content={<ChartLegendContent />} />
-              </LineChart>
+              </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
 
         {/* Forecasting Area */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Prévisions et Alertes précoces</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Analyse des tendances pour identifier les dérives potentielles et générer des alertes précoces.</p>
-            {/* Future implementation: display forecasting chart or list of alerts here */}
-            <div className="mt-4 p-4 border rounded-md">
-                <h3 className="text-lg font-semibold">Alertes Actives:</h3>
-                <ul className="list-disc pl-5">
-                    <li>[Date] - Dérive détectée sur Flux A (ex: baisse du taux de conformité)</li>
-                    <li>[Date] - Pic anormal de mismatches sur Site B</li>
-                    {/* Add more dummy alerts or fetch actual alerts */}
-                </ul>
-            </div>
-          </CardContent>
-        </Card>
+        <ForecastChart />
       </div>
     </div>
   );
