@@ -117,7 +117,7 @@ const complianceChartConfig = {
 export default function EvolutionTemporellePage() {
   const [mismatchData, setMismatchData] = React.useState<MismatchData[]>([]);
   const [complianceData, setComplianceData] = React.useState<ComplianceData[]>([]);
-  const [timeRange, setTimeRange] = React.useState('90d');
+  const [timeRange, setTimeRange] = React.useState('30d');
   const allFlows = React.useMemo(() => Object.keys(allMismatchData[0] || {}).filter(key => key !== 'date'), []);
   const [selectedFlows, setSelectedFlows] = React.useState<string[]>(allFlows.slice(0, 3));
 

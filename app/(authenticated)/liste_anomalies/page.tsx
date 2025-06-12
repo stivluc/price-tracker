@@ -113,6 +113,8 @@ export default function ListeAnomaliesPage() {
   const [showDialog, setShowDialog] = useState(false)
   const [dialogContent, setDialogContent] = useState({ title: '', description: '' })
   const [csvDownloaded, setCsvDownloaded] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadSuccess, setDownloadSuccess] = useState(false)
 
   useEffect(() => {
     setData(generateData())
@@ -241,6 +243,7 @@ export default function ListeAnomaliesPage() {
   })
 
   const exportCSV = () => {
+    setIsDownloading(true)
     // Explicitly filter for columns with accessorKey and cast them
     const dataColumns = columns.filter(
       (column): column is ColumnDef<Anomaly> & { accessorKey: keyof Anomaly } =>
@@ -263,10 +266,11 @@ export default function ListeAnomaliesPage() {
     link.click();
     document.body.removeChild(link);
 
-    setCsvDownloaded(true);
+    setIsDownloading(false)
+    setDownloadSuccess(true)
     setTimeout(() => {
-      setCsvDownloaded(false);
-    }, 3000);
+      setDownloadSuccess(false)
+    }, 2000)
   };
 
   const exportPDF = () => {
@@ -354,8 +358,30 @@ export default function ListeAnomaliesPage() {
         </Select>
         <div className='ml-auto flex flex-col items-end gap-2'>
           <div className='flex gap-2'>
-            <Button variant='outline' size='sm' onClick={exportCSV}>
-              <IconFileTypeCsv className='mr-1 size-4' /> CSV
+            <Button 
+              variant='outline' 
+              size='sm' 
+              onClick={exportCSV}
+              disabled={isDownloading}
+              className={downloadSuccess ? 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-950/30' : ''}
+            >
+              {isDownloading ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <span>Export...</span>
+                </div>
+              ) : downloadSuccess ? (
+                <div className="flex items-center gap-2">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Exporté</span>
+                </div>
+              ) : (
+                <>
+                  <IconFileTypeCsv className='mr-1 size-4' /> CSV
+                </>
+              )}
             </Button>
             <Button variant='outline' size='sm' onClick={exportPDF}>
               <IconFileTypePdf className='mr-1 size-4' /> PDF

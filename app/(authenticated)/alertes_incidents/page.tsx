@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect, useMemo } from 'react'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -10,12 +11,26 @@ import {
   getSortedRowModel,
   SortingState,
   useReactTable,
-  GlobalFilterFn,
+  Row,
 } from '@tanstack/react-table'
-import { useEffect, useMemo, useState } from 'react'
-import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableBody,
@@ -24,6 +39,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { IconExternalLink } from '@tabler/icons-react'
+import { SortableColumnHeader } from '@/components/sortable-column-header'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -31,20 +49,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card'
+import { IconFileTypeCsv, IconFileTypePdf } from '@tabler/icons-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ChartContainer,
   ChartLegend,
@@ -60,15 +66,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import {
-  IconExternalLink,
-  IconFileTypeCsv,
-  IconFileTypePdf,
-} from '@tabler/icons-react'
-import { SortableColumnHeader } from '@/components/sortable-column-header'
 
-// Types
-interface AlertIncident {
+export interface AlertIncident {
   id: number
   date: string
   flowType: string
@@ -81,8 +80,13 @@ interface AlertIncident {
   description: string
 }
 
+export interface TimelineEntry {
+  date: string
+  count: number
+}
+
 // Generate dummy alerts
-const generateAlerts = (): AlertIncident[] => {
+export const generateAlerts = (): AlertIncident[] => {
   const flows = ['Flow A', 'Flow B', 'Flow C']
   const sites = ['Site 1', 'Site 2', 'Site 3']
   const urgencies: AlertIncident['urgency'][] = ['Info', 'Avertissement', 'Critique']
@@ -93,9 +97,7 @@ const generateAlerts = (): AlertIncident[] => {
     const flow = flows[Math.floor(Math.random() * flows.length)]
     const site = sites[Math.floor(Math.random() * sites.length)]
     const nb = Math.floor(Math.random() * 30) + 1
-    const threshold = Math.random() < 0.5
-      ? `> ${(Math.random() * 0.1).toFixed(2)} €`
-      : `> ${Math.floor(Math.random() * 5)} lignes`
+    const threshold = `> ${(Math.random() * 19 + 1).toFixed(2)} €`
     const urgency = urgencies[Math.floor(Math.random() * urgencies.length)]
     const status = statuses[Math.floor(Math.random() * statuses.length)]
     const date = new Date(Date.now() - Math.random() * 30 * 86400000).toISOString()
@@ -118,12 +120,7 @@ const generateAlerts = (): AlertIncident[] => {
 }
 
 // Incident timeline data
-interface TimelineEntry {
-  date: string
-  count: number
-}
-
-const generateTimeline = (): TimelineEntry[] => {
+export const generateTimeline = (): TimelineEntry[] => {
   const data: TimelineEntry[] = []
   const now = new Date()
   for (let i = 29; i >= 0; i--) {
@@ -138,22 +135,37 @@ const generateTimeline = (): TimelineEntry[] => {
 }
 
 // Global search filter
-const globalFilter: GlobalFilterFn<AlertIncident> = (row, columnId, value) => {
+export const globalFilter = (
+  row: Row<AlertIncident>,
+  columnId: string,
+  value: string
+) => {
   const search = String(value).toLowerCase()
-  return (
-    row.getValue<string>('flowType').toLowerCase().includes(search) ||
-    row.getValue<string>('incidentUrl').toLowerCase().includes(search)
-  )
+
+  for (const key in row.original) {
+    if (Object.prototype.hasOwnProperty.call(row.original, key)) {
+      const cellValue = row.original[key as keyof AlertIncident];
+      if (typeof cellValue === 'string' && cellValue.toLowerCase().includes(search)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 export default function AlertesIncidentsPage() {
   const [data, setData] = useState<AlertIncident[]>([])
   const [timeline, setTimeline] = useState<TimelineEntry[]>([])
+  const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState<AlertIncident | null>(null)
+  const [showPdfAlert, setShowPdfAlert] = useState(false)
+  const [showCorrectiveActionAlert, setShowCorrectiveActionAlert] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadSuccess, setDownloadSuccess] = useState(false)
+
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [search, setSearch] = useState('')
-  const [open, setOpen] = useState(false)
-  const [selected, setSelected] = useState<AlertIncident | null>(null)
   const pageSize = 10
 
   useEffect(() => {
@@ -161,14 +173,7 @@ export default function AlertesIncidentsPage() {
     setTimeline(generateTimeline())
   }, [])
 
-  const rolling7 = useMemo(
-    () => timeline.slice(-7).reduce((sum, d) => sum + d.count, 0),
-    [timeline]
-  )
-
-  const chartConfig: ChartConfig = {
-    count: { label: 'Incidents', color: 'hsl(var(--chart-1))' },
-  }
+  const rolling7 = timeline.slice(-7).reduce((sum, d) => sum + d.count, 0)
 
   const columns: ColumnDef<AlertIncident>[] = useMemo(
     () => [
@@ -261,27 +266,12 @@ export default function AlertesIncidentsPage() {
             variant='ghost'
             size='icon'
             className='hover:bg-muted/50'
-            asChild
-          >
-            <a href={row.original.incidentUrl} target='_blank' aria-label='Ouvrir le ticket'>
-              <IconExternalLink className='size-4' />
-            </a>
-          </Button>
-        ),
-      },
-      {
-        id: 'ack',
-        header: () => 'Ack',
-        cell: ({ row }) => (
-          <Button
-            variant='outline'
-            size='sm'
             onClick={() => {
-              row.original.status = 'En cours'
-              setData([...data])
+              setSelected(row.original)
+              setOpen(true)
             }}
           >
-            Ack
+            <IconExternalLink className='size-4' />
           </Button>
         ),
       },
@@ -310,21 +300,25 @@ export default function AlertesIncidentsPage() {
     },
   })
 
-  const openDetail = (incident: AlertIncident) => {
-    setSelected(incident)
-    setOpen(true)
+  const chartConfig: ChartConfig = {
+    count: { label: 'Incidents', color: 'hsl(var(--chart-1))' },
   }
 
   const exportCSV = () => {
-    const dataColumns = columns.filter(
-      (c): c is ColumnDef<AlertIncident> & { accessorKey: keyof AlertIncident } =>
-        'accessorKey' in c && c.accessorKey !== undefined
-    )
-    const headers = dataColumns.map(c => String(c.header)).join(',')
+    setIsDownloading(true)
+    const headers = ['Date alerte', 'Flow', 'Site', 'Nb mismatches', 'Seuil configuré', 'Urgence', 'Statut']
     const rows = table
       .getFilteredRowModel()
-      .rows.map(row => dataColumns.map(c => String(row.getValue(c.accessorKey))).join(','))
-    const csvContent = [headers, ...rows].join('\n')
+      .rows.map((row: { original: AlertIncident }) => [
+        new Date(row.original.date).toLocaleString('fr-FR'),
+        row.original.flowType,
+        row.original.site,
+        row.original.nbMismatches,
+        row.original.threshold,
+        row.original.urgency,
+        row.original.status,
+      ].join(','))
+    const csvContent = [headers.join(','), ...rows].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -333,14 +327,20 @@ export default function AlertesIncidentsPage() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+
+    setIsDownloading(false)
+    setDownloadSuccess(true)
+    setTimeout(() => {
+      setDownloadSuccess(false)
+    }, 2000)
   }
 
   const exportPDF = () => {
-    alert("L'export PDF n'est pas disponible dans la démo.")
+    setShowPdfAlert(true)
   }
 
   return (
-    <div className='px-4 lg:px-6'>
+    <div className='px-4 lg:px-6 pb-8'>
       <h1 className='ml-2 mt-6 text-2xl font-bold'>Alertes et incidents</h1>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -350,7 +350,6 @@ export default function AlertesIncidentsPage() {
               <DialogHeader>
                 <DialogTitle>Incident #{selected.id}</DialogTitle>
               </DialogHeader>
-              <p className='text-sm'>{selected.description}</p>
               <p className='text-sm'>Flow: {selected.flowType}</p>
               <p className='text-sm'>Site: {selected.site}</p>
               <p className='text-sm'>Nb mismatches: {selected.nbMismatches}</p>
@@ -358,22 +357,13 @@ export default function AlertesIncidentsPage() {
               <p className='text-sm'>Urgence: {selected.urgency}</p>
               <p className='text-sm'>Statut: {selected.status}</p>
               <a
-                href={selected.incidentUrl}
+                href='#'
                 target='_blank'
                 className='text-sm text-primary underline'
               >
                 Ouvrir le ticket
               </a>
-              <DialogFooter className='mt-4'>
-                <Button
-                  onClick={() => {
-                    selected.status = 'En cours'
-                    setData([...data])
-                    setOpen(false)
-                  }}
-                >
-                  Acknowledge
-                </Button>
+              <DialogFooter className='mt-4 flex flex-wrap gap-2 sm:justify-end'>
                 <Button
                   variant='secondary'
                   onClick={() => {
@@ -386,9 +376,12 @@ export default function AlertesIncidentsPage() {
                 </Button>
                 <Button
                   variant='outline'
-                  onClick={() => alert('Action corrective créée (fictif)')}
+                  onClick={() => {
+                    setShowCorrectiveActionAlert(true)
+                    setOpen(false)
+                  }}
                 >
-                  Créer action corrective
+                  Action corrective
                 </Button>
               </DialogFooter>
             </>
@@ -396,11 +389,36 @@ export default function AlertesIncidentsPage() {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog open={showPdfAlert} onOpenChange={setShowPdfAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Export PDF non disponible</AlertDialogTitle>
+            <AlertDialogDescription>L&apos;export de rapports PDF n&apos;est pas implémenté dans cette version de démonstration.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Compris</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showCorrectiveActionAlert} onOpenChange={setShowCorrectiveActionAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Action corrective créée (fictif)</AlertDialogTitle>
+            <AlertDialogDescription>La création d&apos;actions correctives n&apos;est pas implémentée dans cette version de démonstration.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Compris</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Filters Section */}
       <div className='flex flex-wrap items-end gap-4 py-4'>
         <Input
           placeholder='Recherche...'
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+          value={table.getState().globalFilter ?? ''}
+          onChange={e => table.setGlobalFilter(e.target.value)}
           className='max-w-xs'
         />
         <Select
@@ -461,8 +479,30 @@ export default function AlertesIncidentsPage() {
         </Select>
         <div className='ml-auto flex flex-col items-end gap-2'>
           <div className='flex gap-2'>
-            <Button variant='outline' size='sm' onClick={exportCSV}>
-              <IconFileTypeCsv className='mr-1 size-4' /> CSV
+            <Button 
+              variant='outline' 
+              size='sm' 
+              onClick={exportCSV}
+              disabled={isDownloading}
+              className={downloadSuccess ? 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-950/30' : ''}
+            >
+              {isDownloading ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <span>Export...</span>
+                </div>
+              ) : downloadSuccess ? (
+                <div className="flex items-center gap-2">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Exporté</span>
+                </div>
+              ) : (
+                <>
+                  <IconFileTypeCsv className='mr-1 size-4' /> CSV
+                </>
+              )}
             </Button>
             <Button variant='outline' size='sm' onClick={exportPDF}>
               <IconFileTypePdf className='mr-1 size-4' /> PDF
@@ -471,6 +511,7 @@ export default function AlertesIncidentsPage() {
         </div>
       </div>
 
+      {/* Alerts Table */}
       <div className='rounded-md border'>
         <Table>
           <TableHeader>
@@ -492,7 +533,10 @@ export default function AlertesIncidentsPage() {
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map(row => (
-                <TableRow key={row.id} onClick={() => openDetail(row.original)} className='cursor-pointer'>
+                <TableRow key={row.id} onClick={() => {
+                  setSelected(row.original)
+                  setOpen(true)
+                }} className='cursor-pointer'>
                   {row.getVisibleCells().map(cell => (
                     <TableCell key={cell.id} className='py-2'>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -510,42 +554,43 @@ export default function AlertesIncidentsPage() {
           </TableBody>
         </Table>
       </div>
-      <div className='flex items-center justify-between py-4'>
-        <div className='flex items-center gap-2'>
-          <p className='text-sm text-muted-foreground'>
-            Lignes {table.getState().pagination.pageIndex * pageSize + 1}-
-            {Math.min(
-              (table.getState().pagination.pageIndex + 1) * pageSize,
-              table.getFilteredRowModel().rows.length
-            )}{' '}
-            sur {table.getFilteredRowModel().rows.length}
-          </p>
-        </div>
-        <div className='flex items-center gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Précédent
-          </Button>
-          <div className='flex items-center gap-1'>
-            <span className='text-sm text-muted-foreground'>
-              Page {table.getState().pagination.pageIndex + 1} sur {table.getPageCount()}
-            </span>
+        <div className='flex items-center justify-between py-4'>
+          <div className='flex items-center gap-2'>
+            <p className='text-sm text-muted-foreground'>
+              Lignes {table.getState().pagination.pageIndex * pageSize + 1}-
+              {Math.min(
+                (table.getState().pagination.pageIndex + 1) * pageSize,
+                table.getFilteredRowModel().rows.length
+              )}{' '}
+              sur {table.getFilteredRowModel().rows.length}
+            </p>
           </div>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Suivant
-          </Button>
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Précédent
+            </Button>
+            <div className='flex items-center gap-1'>
+              <span className='text-sm text-muted-foreground'>
+                Page {table.getState().pagination.pageIndex + 1} sur {table.getPageCount()}
+              </span>
+            </div>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Suivant
+            </Button>
+          </div>
         </div>
-      </div>
 
+      {/* Timeline Chart */}
       <h2 className='ml-2 mt-8 text-lg font-bold'>Chronologie des incidents</h2>
       <Card className='mt-4'>
         <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
