@@ -1,0 +1,49 @@
+# Enable rewrite engine
+
+RewriteEngine On
+
+# If the request is for a file or directory that exists, serve it directly
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# If the request is for a specific route, serve the corresponding HTML file
+
+RewriteRule ^login/?$ /login.html [L]
+RewriteRule ^evolution_temporelle/?$ /evolution_temporelle.html [L]
+RewriteRule ^liste_anomalies/?$ /liste_anomalies.html [L]
+RewriteRule ^alertes_incidents/?$ /alertes_incidents.html [L]
+RewriteRule ^detail_flux_site/?$ /detail_flux_site.html [L]
+RewriteRule ^404/?$ /404.html [L]
+RewriteRule ^500/?$ /500.html [L]
+
+# For all other requests, serve index.html
+
+RewriteRule ^ index.html [L]
+
+# Prevent directory listing
+
+Options -Indexes
+
+# Set default character set
+
+AddDefaultCharset UTF-8
+
+# Enable CORS
+
+Header set Access-Control-Allow-Origin "\*"
+
+# Cache control for static assets
+
+<FilesMatch "\.(ico|pdf|jpg|jpeg|png|gif|js|css|swf|svg)$">
+Header set Cache-Control "max-age=31536000, public"
+</FilesMatch>
+
+# Cache control for HTML files
+
+<FilesMatch "\.(html|htm)$">
+Header set Cache-Control "no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires 0
+</FilesMatch>

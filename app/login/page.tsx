@@ -18,7 +18,7 @@ export default function LoginPage() {
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center">
             <Image
-              src="/images/castorama_logo.png"
+              src="/castorama_logo.png"
               alt="Castorama Logo"
               width={128}
               height={32}
@@ -34,7 +34,7 @@ export default function LoginPage() {
       </div>
       <div className="bg-muted relative hidden lg:block">
         <Image
-          src="/images/castorama_auth_illustration.jpg"
+          src="/castorama_auth_illustration.jpg"
           alt="Authentication illustration"
           fill
           className="object-cover brightness-[0.8] dark:brightness-[0.2] dark:grayscale"
