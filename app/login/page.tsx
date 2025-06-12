@@ -1,5 +1,15 @@
 import Image from "next/image"
 import { LoginForm } from "@/components/login-form"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Login",
+  description: "Sign in to your Price Tracker account.",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 export default function LoginPage() {
   return (
@@ -8,7 +18,7 @@ export default function LoginPage() {
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center">
             <Image
-              src="/castorama_logo.png"
+              src="/images/castorama_logo.png"
               alt="Castorama Logo"
               width={128}
               height={32}
@@ -24,7 +34,7 @@ export default function LoginPage() {
       </div>
       <div className="bg-muted relative hidden lg:block">
         <Image
-          src="/castorama_auth_illustration.jpg"
+          src="/images/castorama_auth_illustration.jpg"
           alt="Authentication illustration"
           fill
           className="object-cover brightness-[0.8] dark:brightness-[0.2] dark:grayscale"
