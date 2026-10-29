@@ -52,7 +52,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { IconFileTypeCsv, IconFileTypePdf } from '@tabler/icons-react'
-import { Card, CardBleed, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardBleed, CardContent, CardDescription, CardHeader, CardTitle, mobileSection } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import {
   ChartContainer,
   ChartTooltip,
@@ -526,7 +527,7 @@ export default function AlertesIncidentsPage() {
       </div>
 
       {/* Alerts Table */}
-      <div>
+      <div className={cn(mobileSection, 'max-sm:pt-0')}>
       <div className="-mx-4 border-y sm:mx-0 sm:rounded-md sm:border">
         <Table>
           <TableHeader>

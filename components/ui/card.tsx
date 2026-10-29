@@ -2,8 +2,14 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-// `bleed`: on phones, drop the card chrome and span the page padding, so a
-// CardBleed child can use the full screen width (same treatment as the tables).
+// Mobile section (< sm): flat block with generous vertical padding, followed by
+// a full-bleed separator band. The negative bottom margin absorbs the page's
+// 16px gap so the band sits right above the next section.
+const mobileSection =
+  "max-sm:relative max-sm:pt-[26px] max-sm:pb-[34px] max-sm:-mb-4 max-sm:last:mb-0 max-sm:after:absolute max-sm:after:-inset-x-4 max-sm:after:bottom-0 max-sm:after:h-2 max-sm:after:bg-sep max-sm:last:after:hidden"
+
+// `bleed`: on phones, drop the card chrome and render the card as a mobile
+// section; a CardBleed child spans the full screen width (like the tables).
 function Card({
   className,
   bleed = false,
@@ -15,7 +21,11 @@ function Card({
       className={cn(
         "bg-card text-card-foreground flex flex-col gap-4 rounded-xl border py-4 shadow-sm sm:gap-6 sm:py-6",
         bleed &&
-          "max-sm:-mx-4 max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:py-0 max-sm:shadow-none",
+          cn(
+            mobileSection,
+            "max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:shadow-none max-sm:*:px-0",
+            "max-sm:*:data-[slot=card-header]:*:data-[slot=card-title]:text-[1.14rem] max-sm:*:data-[slot=card-header]:*:data-[slot=card-title]:font-[650]"
+          ),
         className
       )}
       {...props}
@@ -83,7 +93,7 @@ function CardBleed({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-bleed"
-      className={cn("max-sm:-mx-4 max-sm:border-y max-sm:px-3 max-sm:py-3", className)}
+      className={cn("max-sm:-mx-4 max-sm:px-3", className)}
       {...props}
     />
   )
@@ -100,6 +110,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 export {
+  mobileSection,
   Card,
   CardHeader,
   CardFooter,

@@ -111,7 +111,7 @@ export default function EvolutionTemporellePage() {
         </Select>
       </PageHeader>
 
-      <Card bleed>
+      <Card bleed className='max-sm:pt-2'>
         <CardHeader>
           <CardTitle>Mismatches par jour et par flux</CardTitle>
           <CardDescription>Jusqu&apos;à {MAX_FLOWS} flux comparés</CardDescription>

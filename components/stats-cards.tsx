@@ -10,8 +10,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  mobileSection,
 } from "@/components/ui/card"
 import { formatInt } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 export type LiveKpis = {
   lines: number
@@ -67,20 +69,22 @@ function KpiCard({
 }) {
   const Icon = trend === "up" ? IconTrendingUp : IconTrendingDown
   return (
-    <Card className="@container/card">
-      <CardHeader>
-        <CardDescription>{title}</CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+    // On phones the card chrome goes away: a compact cell of a 2-column stat
+    // grid (title, value, trend), with hairline dividers between cells.
+    <Card className="@container/card max-sm:gap-2 max-sm:rounded-none max-sm:border-0 max-sm:bg-none max-sm:py-3.5 max-sm:shadow-none max-sm:odd:border-r max-sm:odd:pr-3 max-sm:even:pl-4 max-sm:[&:nth-child(-n+2)]:border-b max-sm:[&:nth-child(-n+2)]:pt-0 max-sm:[&:nth-last-child(-n+2)]:pb-0">
+      <CardHeader className="max-sm:grid-cols-1! max-sm:gap-1 max-sm:px-0">
+        <CardDescription className="max-sm:text-xs">{title}</CardDescription>
+        <CardTitle className="text-2xl font-semibold tabular-nums max-sm:text-xl @[250px]/card:text-3xl">
           {value}
         </CardTitle>
-        <CardAction>
+        <CardAction className="max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-3 max-sm:mt-1 max-sm:justify-self-start">
           <Badge variant="outline">
             <Icon />
             {badge}
           </Badge>
         </CardAction>
       </CardHeader>
-      <CardFooter className="flex-col items-start gap-1.5 text-sm">
+      <CardFooter className="flex-col items-start gap-1.5 text-sm max-sm:hidden">
         <div className="flex gap-2 font-medium">
           {summary} <Icon className="size-4" />
         </div>
@@ -92,7 +96,14 @@ function KpiCard({
 
 export function StatsCards({ kpis }: { kpis: LiveKpis }) {
   return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-3 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs sm:gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+    <div
+      className={cn(
+        "*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-2 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs sm:grid-cols-1 sm:gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4",
+        "max-sm:*:data-[slot=card]:bg-none max-sm:*:data-[slot=card]:shadow-none",
+        mobileSection,
+        "max-sm:pt-2"
+      )}
+    >
       <KpiCard
         title={`Lignes traitées (${PERIOD_DAYS} j)`}
         value={<NumberFlow value={kpis.lines} locales="fr-FR" />}
