@@ -2,12 +2,20 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+// `bleed`: on phones, drop the card chrome and span the page padding, so a
+// CardBleed child can use the full screen width (same treatment as the tables).
+function Card({
+  className,
+  bleed = false,
+  ...props
+}: React.ComponentProps<"div"> & { bleed?: boolean }) {
   return (
     <div
       data-slot="card"
       className={cn(
         "bg-card text-card-foreground flex flex-col gap-4 rounded-xl border py-4 shadow-sm sm:gap-6 sm:py-6",
+        bleed &&
+          "max-sm:-mx-4 max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:py-0 max-sm:shadow-none",
         className
       )}
       {...props}
@@ -71,6 +79,16 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+function CardBleed({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-bleed"
+      className={cn("max-sm:-mx-4 max-sm:border-y max-sm:px-3 max-sm:py-3", className)}
+      {...props}
+    />
+  )
+}
+
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -89,4 +107,5 @@ export {
   CardAction,
   CardDescription,
   CardContent,
+  CardBleed,
 }

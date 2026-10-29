@@ -52,7 +52,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { IconFileTypeCsv, IconFileTypePdf } from '@tabler/icons-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardBleed, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ChartContainer,
   ChartTooltip,
@@ -573,38 +573,40 @@ export default function AlertesIncidentsPage() {
       </div>
 
       {/* Timeline Chart */}
-      <Card>
+      <Card bleed>
         <CardHeader>
           <CardTitle>Chronologie des incidents</CardTitle>
           <CardDescription>
             30 derniers jours, dont {rolling7} sur les 7 derniers jours
           </CardDescription>
         </CardHeader>
-        <CardContent className='px-2 sm:px-6'>
-          <ChartContainer config={chartConfig} className='aspect-auto h-[200px] w-full sm:h-[260px]'>
-            <BarChart data={timeline} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey='date'
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={24}
-                tickFormatter={formatShortDate}
-              />
-              <YAxis
-                width={28}
-                tickLine={false}
-                axisLine={false}
-                allowDecimals={false}
-              />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
-              />
-              <Bar dataKey='count' fill='var(--color-count)' radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ChartContainer>
+        <CardContent>
+          <CardBleed>
+            <ChartContainer config={chartConfig} className='aspect-auto h-[200px] w-full sm:h-[260px]'>
+              <BarChart data={timeline} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey='date'
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  minTickGap={24}
+                  tickFormatter={formatShortDate}
+                />
+                <YAxis
+                  width={28}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
+                />
+                <Bar dataKey='count' fill='var(--color-count)' radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardBleed>
         </CardContent>
       </Card>
     </div>

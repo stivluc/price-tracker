@@ -4,7 +4,7 @@ import * as React from 'react'
 import { X } from 'lucide-react'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardBleed, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
@@ -111,7 +111,7 @@ export default function EvolutionTemporellePage() {
         </Select>
       </PageHeader>
 
-      <Card>
+      <Card bleed>
         <CardHeader>
           <CardTitle>Mismatches par jour et par flux</CardTitle>
           <CardDescription>Jusqu&apos;à {MAX_FLOWS} flux comparés</CardDescription>
@@ -147,51 +147,9 @@ export default function EvolutionTemporellePage() {
               />
             )}
           </div>
-          <ChartContainer config={mismatchChartConfig} className='aspect-auto h-[220px] w-full sm:h-[300px]'>
-            <BarChart data={mismatchData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey='date'
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={24}
-                tickFormatter={formatShortDate}
-              />
-              <YAxis width={36} tickLine={false} axisLine={false} />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
-              />
-              {selectedFlows.map((flow, index) => (
-                <Bar
-                  key={flow}
-                  dataKey={flow}
-                  stackId='a'
-                  fill={flowColor(flow)}
-                  radius={index === selectedFlows.length - 1 ? [2, 2, 0, 0] : 0}
-                />
-              ))}
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
-      <div className='grid grid-cols-1 gap-4 lg:gap-6 @4xl/main:grid-cols-2'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Taux de conformité</CardTitle>
-            <CardDescription>Moyenne glissante sur 7 jours</CardDescription>
-          </CardHeader>
-          <CardContent className='flex flex-1 flex-col'>
-            <ChartContainer config={complianceChartConfig} className='aspect-auto min-h-[200px] w-full flex-1 sm:min-h-[240px]'>
-              <AreaChart data={complianceData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id='complianceGradient' x1='0' y1='0' x2='0' y2='1'>
-                    <stop offset='5%' stopColor='var(--color-complianceRate)' stopOpacity={0.4} />
-                    <stop offset='95%' stopColor='var(--color-complianceRate)' stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
+          <CardBleed>
+            <ChartContainer config={mismatchChartConfig} className='aspect-auto h-[220px] w-full sm:h-[300px]'>
+              <BarChart data={mismatchData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <CartesianGrid vertical={false} />
                 <XAxis
                   dataKey='date'
@@ -201,28 +159,74 @@ export default function EvolutionTemporellePage() {
                   minTickGap={24}
                   tickFormatter={formatShortDate}
                 />
-                <YAxis
-                  width={44}
-                  domain={[70, 100]}
-                  ticks={[70, 80, 90, 100]}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v) => `${v}\u00a0%`}
-                />
+                <YAxis width={36} tickLine={false} axisLine={false} />
                 <ChartTooltip
                   cursor={false}
                   content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
                 />
-                <Area
-                  type='monotone'
-                  dataKey='complianceRate'
-                  fill='url(#complianceGradient)'
-                  stroke='var(--color-complianceRate)'
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </AreaChart>
+                {selectedFlows.map((flow, index) => (
+                  <Bar
+                    key={flow}
+                    dataKey={flow}
+                    stackId='a'
+                    fill={flowColor(flow)}
+                    radius={index === selectedFlows.length - 1 ? [2, 2, 0, 0] : 0}
+                  />
+                ))}
+              </BarChart>
             </ChartContainer>
+          </CardBleed>
+        </CardContent>
+      </Card>
+
+      <div className='grid grid-cols-1 gap-4 lg:gap-6 @4xl/main:grid-cols-2'>
+        <Card bleed>
+          <CardHeader>
+            <CardTitle>Taux de conformité</CardTitle>
+            <CardDescription>Moyenne glissante sur 7 jours</CardDescription>
+          </CardHeader>
+          <CardContent className='flex flex-1 flex-col'>
+            <CardBleed className='flex flex-1 flex-col'>
+              <ChartContainer config={complianceChartConfig} className='aspect-auto min-h-[200px] w-full flex-1 sm:min-h-[240px]'>
+                <AreaChart data={complianceData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id='complianceGradient' x1='0' y1='0' x2='0' y2='1'>
+                      <stop offset='5%' stopColor='var(--color-complianceRate)' stopOpacity={0.4} />
+                      <stop offset='95%' stopColor='var(--color-complianceRate)' stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey='date'
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={24}
+                    tickFormatter={formatShortDate}
+                  />
+                  <YAxis
+                    width={44}
+                    domain={[70, 100]}
+                    ticks={[70, 80, 90, 100]}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v) => `${v}\u00a0%`}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
+                  />
+                  <Area
+                    type='monotone'
+                    dataKey='complianceRate'
+                    fill='url(#complianceGradient)'
+                    stroke='var(--color-complianceRate)'
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </AreaChart>
+              </ChartContainer>
+            </CardBleed>
           </CardContent>
         </Card>
 

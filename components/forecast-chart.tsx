@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, XAxis, YAxis } from 'recharts'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardBleed, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ChartConfig,
   ChartContainer,
@@ -97,60 +97,62 @@ export default function ForecastChart() {
   }, [])
 
   return (
-    <Card>
+    <Card bleed>
       <CardHeader>
         <CardTitle>Prévision à {FORECAST_DAYS} jours</CardTitle>
         <CardDescription>Mismatches quotidiens et seuil d&apos;alerte</CardDescription>
       </CardHeader>
       <CardContent className='flex flex-col gap-4'>
-        <ChartContainer config={chartConfig} className='aspect-auto h-[200px] w-full sm:h-[240px]'>
-          <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey='date'
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={24}
-              tickFormatter={formatShortDate}
-            />
-            <YAxis
-              width={28}
-              tickLine={false}
-              axisLine={false}
-              allowDecimals={false}
-              domain={[0, (max: number) => Math.max(ALERT_THRESHOLD + 10, Math.ceil(max / 10) * 10)]}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
-            />
-            <ReferenceLine
-              y={ALERT_THRESHOLD}
-              stroke='var(--color-threshold)'
-              strokeDasharray='4 4'
-            />
-            <Area
-              dataKey='band'
-              stroke='none'
-              fill='var(--color-band)'
-              fillOpacity={0.15}
-              legendType='none'
-              tooltipType='none'
-              activeDot={false}
-              isAnimationActive={false}
-            />
-            <Line dataKey='real' stroke='var(--color-real)' strokeWidth={2} dot={false} />
-            <Line
-              dataKey='forecast'
-              stroke='var(--color-forecast)'
-              strokeWidth={2}
-              strokeDasharray='5 4'
-              dot={false}
-            />
-            <ChartLegend payload={legendPayload} content={<ChartLegendContent />} />
-          </ComposedChart>
-        </ChartContainer>
+        <CardBleed>
+          <ChartContainer config={chartConfig} className='aspect-auto h-[200px] w-full sm:h-[240px]'>
+            <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey='date'
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={24}
+                tickFormatter={formatShortDate}
+              />
+              <YAxis
+                width={28}
+                tickLine={false}
+                axisLine={false}
+                allowDecimals={false}
+                domain={[0, (max: number) => Math.max(ALERT_THRESHOLD + 10, Math.ceil(max / 10) * 10)]}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
+              />
+              <ReferenceLine
+                y={ALERT_THRESHOLD}
+                stroke='var(--color-threshold)'
+                strokeDasharray='4 4'
+              />
+              <Area
+                dataKey='band'
+                stroke='none'
+                fill='var(--color-band)'
+                fillOpacity={0.15}
+                legendType='none'
+                tooltipType='none'
+                activeDot={false}
+                isAnimationActive={false}
+              />
+              <Line dataKey='real' stroke='var(--color-real)' strokeWidth={2} dot={false} />
+              <Line
+                dataKey='forecast'
+                stroke='var(--color-forecast)'
+                strokeWidth={2}
+                strokeDasharray='5 4'
+                dot={false}
+              />
+              <ChartLegend payload={legendPayload} content={<ChartLegendContent />} />
+            </ComposedChart>
+          </ChartContainer>
+        </CardBleed>
         <div className='grid grid-cols-2 gap-4 text-sm'>
           <div>
             <div className='text-muted-foreground text-xs'>Tendance sur 7 jours</div>
