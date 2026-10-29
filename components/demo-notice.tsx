@@ -50,23 +50,22 @@ export function DemoNotice() {
         }}
       >
         <DialogHeader className="text-left">
-          <DialogTitle>Démo portfolio</DialogTitle>
+          <DialogTitle>Prototype : suivi des écarts de prix</DialogTitle>
           <DialogDescription asChild>
             <div className="space-y-2">
               <p>
-                Ce site est une démonstration : un tableau de bord de suivi des
-                anomalies de prix et de flux.
+                Ce tableau de bord a été conçu comme prototype pour un projet
+                mené auprès de Castorama. Il permet de repérer et de traiter
+                efficacement les écarts de prix entre différents flux, et
+                d&apos;alerter lorsqu&apos;un seuil est dépassé.
               </p>
               <p>Toutes les données sont fictives et générées automatiquement.</p>
-              <p>
-                Ce projet n&apos;est affilié ni à Castorama ni à aucune autre
-                entreprise.
-              </p>
+              <p>Cette démo n&apos;est pas affiliée à Castorama.</p>
             </div>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Compris</Button>
+          <Button onClick={() => onOpenChange(false)}>Voir la démo</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
