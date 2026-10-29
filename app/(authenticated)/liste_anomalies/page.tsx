@@ -1,5 +1,6 @@
 'use client'
 
+import { DataTablePagination } from '@/components/data-table-pagination'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -297,18 +298,18 @@ export default function ListeAnomaliesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className='flex flex-wrap items-end gap-4 py-4'>
+      <div className='grid grid-cols-2 gap-2 py-4 sm:flex sm:flex-wrap sm:items-end sm:gap-4'>
         <Input
           placeholder='Rechercher par article ou EAN...'
           value={globalFilter ?? ''}
           onChange={(event) => setGlobalFilter(event.target.value)}
-          className='max-w-xs'
+          className='col-span-2 sm:max-w-xs'
         />
         <Select
           onValueChange={(value) => table.getColumn('flowType')?.setFilterValue(value === 'all' ? '' : value)}
           value={(table.getColumn('flowType')?.getFilterValue() as string) ?? 'all'}
         >
-          <SelectTrigger className='w-40'>
+          <SelectTrigger className='w-full sm:w-40'>
             <SelectValue placeholder='Type de flux' />
           </SelectTrigger>
           <SelectContent>
@@ -322,7 +323,7 @@ export default function ListeAnomaliesPage() {
           onValueChange={(value) => table.getColumn('site')?.setFilterValue(value === 'all' ? '' : value)}
           value={(table.getColumn('site')?.getFilterValue() as string) ?? 'all'}
         >
-          <SelectTrigger className='w-40'>
+          <SelectTrigger className='w-full sm:w-40'>
             <SelectValue placeholder='Site' />
           </SelectTrigger>
           <SelectContent>
@@ -339,13 +340,13 @@ export default function ListeAnomaliesPage() {
           onChange={(event) =>
             table.getColumn('delta')?.setFilterValue(event.target.value)
           }
-          className='w-32'
+          className='w-full sm:w-32'
         />
         <Select
           onValueChange={(value) => table.getColumn('status')?.setFilterValue(value === 'all' ? '' : value)}
           value={(table.getColumn('status')?.getFilterValue() as string) ?? 'all'}
         >
-          <SelectTrigger className='w-40'>
+          <SelectTrigger className='w-full sm:w-40'>
             <SelectValue placeholder='Statut' />
           </SelectTrigger>
           <SelectContent>
@@ -354,7 +355,7 @@ export default function ListeAnomaliesPage() {
             <SelectItem value='Critique'>Critique</SelectItem>
           </SelectContent>
         </Select>
-        <div className='ml-auto flex flex-col items-end gap-2'>
+        <div className='col-span-2 ml-auto flex flex-col items-end gap-2'>
           <div className='flex gap-2'>
             <Button 
               variant='outline' 
@@ -388,7 +389,7 @@ export default function ListeAnomaliesPage() {
         </div>
       </div>
 
-      <div className='rounded-md border'>
+      <div className="-mx-4 border-y sm:mx-0 sm:rounded-md sm:border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -440,42 +441,7 @@ export default function ListeAnomaliesPage() {
           </TableBody>
         </Table>
       </div>
-      <div className='flex items-center justify-between py-4'>
-        <div className='flex items-center gap-2'>
-          <p className='text-sm text-muted-foreground'>
-            Lignes {table.getState().pagination.pageIndex * pageSize + 1}-
-            {Math.min(
-              (table.getState().pagination.pageIndex + 1) * pageSize,
-              table.getFilteredRowModel().rows.length
-            )}{' '}
-            sur {table.getFilteredRowModel().rows.length}
-          </p>
-        </div>
-        <div className='flex items-center gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Précédent
-          </Button>
-          <div className='flex items-center gap-1'>
-            <span className='text-sm text-muted-foreground'>
-              Page {table.getState().pagination.pageIndex + 1} sur{' '}
-              {table.getPageCount()}
-            </span>
-          </div>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Suivant
-          </Button>
-        </div>
-      </div>
+      <DataTablePagination table={table} />
     </div>
   )
 }

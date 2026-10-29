@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-2">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
+      <div className="flex flex-col gap-4 p-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center">
             <Image

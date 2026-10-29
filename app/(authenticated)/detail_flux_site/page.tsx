@@ -1,5 +1,6 @@
 "use client"
 
+import { DataTablePagination } from '@/components/data-table-pagination'
 import { IconAlertCircle, IconAlertTriangle, IconCheck } from "@tabler/icons-react"
 import {
   ColumnDef,
@@ -15,7 +16,6 @@ import {
 import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -144,10 +144,10 @@ export default function DetailFluxPage() {
           onChange={(event) =>
             table.getColumn("site")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="sm:max-w-sm"
         />
       </div>
-      <div className="rounded-md border">
+      <div className="-mx-4 border-y sm:mx-0 sm:rounded-md sm:border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -200,42 +200,7 @@ export default function DetailFluxPage() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between py-4">
-        <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">
-            Lignes {table.getState().pagination.pageIndex * pageSize + 1}-
-            {Math.min(
-              (table.getState().pagination.pageIndex + 1) * pageSize,
-              table.getFilteredRowModel().rows.length
-            )}{" "}
-            sur {table.getFilteredRowModel().rows.length}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Précédent
-          </Button>
-          <div className="flex items-center gap-1">
-            <span className="text-sm text-muted-foreground">
-              Page {table.getState().pagination.pageIndex + 1} sur{" "}
-              {table.getPageCount()}
-            </span>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Suivant
-          </Button>
-        </div>
-      </div>
+      <DataTablePagination table={table} />
     </div>
   )
 }

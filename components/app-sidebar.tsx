@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { NavUser } from "./nav-user"
@@ -66,6 +67,10 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
+  const closeOnMobile = () => {
+    if (isMobile) setOpenMobile(false)
+  }
 
   return (
     <Sidebar {...props} collapsible="offcanvas" {...props}>
@@ -99,7 +104,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   return (
                     <SidebarMenuItem key={navItem.title}>
                       <SidebarMenuButton asChild isActive={isActive}>
-                        <Link href={navItem.url}>{navItem.title}</Link>
+                        <Link href={navItem.url} onClick={closeOnMobile}>{navItem.title}</Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )

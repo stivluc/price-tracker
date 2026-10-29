@@ -97,7 +97,8 @@ export default function AuthenticatedLayout({
     <div className="flex min-h-screen w-full">
       <AppSidebar />
       <div className="flex flex-col flex-1 min-w-0">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
+        <header className="sticky top-0 z-20 flex shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur pt-[env(safe-area-inset-top)] pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
+          <div className="flex h-14 items-center gap-2 sm:h-16">
           <SidebarTrigger className="-ml-1" />
           <Separator
             orientation="vertical"
@@ -116,8 +117,9 @@ export default function AuthenticatedLayout({
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          </div>
         </header>
-        <SidebarInset className="flex flex-col flex-1 overflow-auto">
+        <SidebarInset className="flex flex-col flex-1 overflow-auto pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
           {children}
         </SidebarInset>
       </div>
