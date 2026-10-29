@@ -5,13 +5,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/lib/auth-context"
-import { FormEvent } from "react"
+import { FormEvent, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Cookies from "js-cookie"
+import { Info } from "lucide-react"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const { login, loginWithMicrosoft } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (Cookies.get("isAuthenticated") === "true") router.replace("/")
+  }, [router])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -27,6 +35,13 @@ export function LoginForm({
         <h1 className="text-2xl font-bold">Login to your account</h1>
         <p className="text-muted-foreground text-sm text-balance">
           Enter your email below to login to your account
+        </p>
+      </div>
+      <div className="flex gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+        <Info className="mt-0.5 h-4 w-4 shrink-0" />
+        <p>
+          <span className="font-medium">Demo:</span> there is no real authentication.
+          Enter any email and password, or use the Microsoft button.
         </p>
       </div>
       <div className="grid gap-6">

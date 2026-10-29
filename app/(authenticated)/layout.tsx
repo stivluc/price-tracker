@@ -1,6 +1,7 @@
 "use client"
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
@@ -13,7 +14,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 
 // Import the navigation data structure
@@ -60,6 +61,14 @@ export default function AuthenticatedLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+
+  // Demo auth: client-side guard (static hosting, no middleware)
+  useEffect(() => {
+    if (Cookies.get("isAuthenticated") === "true") setReady(true);
+    else router.replace("/login");
+  }, [router]);
 
   // Find the current section and page based on the pathname
   const findCurrentNavigation = () => {
@@ -81,6 +90,8 @@ export default function AuthenticatedLayout({
   };
 
   const { section, page } = findCurrentNavigation();
+
+  if (!ready) return null;
 
   return (
     <div className="flex min-h-screen w-full">
