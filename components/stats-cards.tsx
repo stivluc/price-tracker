@@ -98,7 +98,7 @@ export function StatsCards({ kpis }: { kpis: LiveKpis }) {
   return (
     <div
       className={cn(
-        "*:data-[slot=card]:from-foreground/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-2 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs sm:grid-cols-1 sm:gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4",
+        "*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-2 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs sm:grid-cols-1 sm:gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4",
         "max-sm:*:data-[slot=card]:bg-none max-sm:*:data-[slot=card]:shadow-none",
         mobileSection,
         "max-sm:pt-2"

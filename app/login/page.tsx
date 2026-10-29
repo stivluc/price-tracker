@@ -41,7 +41,7 @@ export default function LoginPage() {
         className="bg-muted hidden items-center justify-center p-10 select-none lg:flex"
       >
         <div className="flex w-full max-w-md flex-col gap-4 opacity-80">
-          <Card className="from-foreground/5 to-card bg-gradient-to-t shadow-xs dark:bg-card">
+          <Card className="from-primary/5 to-card bg-gradient-to-t shadow-xs dark:bg-card">
             <CardHeader>
               <CardDescription>Concordance globale</CardDescription>
               <CardTitle className="text-3xl font-semibold tabular-nums">96,4 %</CardTitle>

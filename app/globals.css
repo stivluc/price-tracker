@@ -80,7 +80,30 @@
   --chart-9: oklch(0.8 0.05 10); /* Very Light Red/Brownish */
   --chart-10: oklch(0.6 0.08 200); /* Light Blue */
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
+  /* Navy sidebar (desktop). The mobile menu switches back to light tokens below. */
+  --sidebar: #0b1f3a;
+  --sidebar-foreground: #c7d3e3;
+  --sidebar-primary: #3d9be9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #173459;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #173459;
+  --sidebar-ring: #3d9be9;
+  /* Mobile section separator band: a faint tint of the page background */
+  --sep: color-mix(in srgb, var(--foreground) 5%, var(--background));
+}
+
+/* Desktop: light blue-grey page so the white cards stand out. Mobile keeps a
+   white page: its sections are flat and separated by bands. */
+@media (min-width: 640px) {
+  :root {
+    --background: #f4f6fa;
+  }
+}
+
+/* The full-screen mobile menu sits on the page background, so it uses light tokens. */
+[data-mobile="true"] {
+  --sidebar: var(--background);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.538 0.143 247.6);
   --sidebar-primary-foreground: oklch(1 0 0);
@@ -88,8 +111,6 @@
   --sidebar-accent-foreground: oklch(0.456 0.121 247.5);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.538 0.143 247.6);
-  /* Mobile section separator band: a faint tint of the page background */
-  --sep: color-mix(in srgb, var(--foreground) 5%, var(--background));
 }
 
 .dark {
