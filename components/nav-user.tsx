@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react"
 import {
   BadgeCheck,
   Bell,
@@ -38,8 +39,12 @@ export function NavUser({
     avatar: string
   }
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
   const { logout } = useAuth()
+  // Log out only once the menu has fully closed. Navigating to /login while
+  // the menu (and on mobile the sidebar sheet) is still mounted unmounts both
+  // modal layers at once, and Radix then leaves pointer-events: none on <body>.
+  const loggingOut = useRef(false)
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -65,6 +70,12 @@ export function NavUser({
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
+            onCloseAutoFocus={(event) => {
+              if (!loggingOut.current) return
+              event.preventDefault()
+              loggingOut.current = false
+              logout()
+            }}
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
@@ -80,17 +91,22 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <BadgeCheck />
                 Compte
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <Bell />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
+            <DropdownMenuItem
+              onSelect={() => {
+                loggingOut.current = true
+                setOpenMobile(false)
+              }}
+            >
               <LogOut />
               Se déconnecter
             </DropdownMenuItem>
