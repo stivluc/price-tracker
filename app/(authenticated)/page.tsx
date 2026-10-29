@@ -15,7 +15,7 @@ export default function HomePage() {
       <PageHeader title="Vue d'ensemble" />
       <StatsCards kpis={kpis} />
       <Heatmap data={CONCORDANCE} rows={FLOWS} cols={SITES} />
-      <StatusBanner value={100 - kpis.concordance} />
+      <StatusBanner />
     </div>
   )
 }
