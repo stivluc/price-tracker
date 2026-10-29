@@ -82,7 +82,7 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
-                Account
+                Compte
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />
@@ -92,7 +92,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut />
-              Log out
+              Se déconnecter
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

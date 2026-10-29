@@ -3,8 +3,8 @@ import { LoginForm } from "@/components/login-form"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Login",
-  description: "Sign in to your Price Tracker account.",
+  title: "Connexion",
+  description: "Connexion à la démo Price Tracker.",
   robots: {
     index: false,
     follow: true,
@@ -35,7 +35,7 @@ export default function LoginPage() {
       <div className="bg-muted relative hidden lg:block">
         <Image
           src="/castorama_auth_illustration.jpg"
-          alt="Authentication illustration"
+          alt=""
           fill
           className="object-cover brightness-[0.8] dark:brightness-[0.2] dark:grayscale"
         />

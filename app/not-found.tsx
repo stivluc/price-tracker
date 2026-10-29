@@ -6,19 +6,19 @@ import { Home } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
+    <div className="flex min-h-svh items-center justify-center p-6">
       <div className="flex flex-col items-center justify-center gap-6 text-center">
         <div>
           <h1 className="text-4xl font-bold">404</h1>
-          <h2 className="mt-2 text-2xl font-semibold">Page Not Found</h2>
+          <h2 className="mt-2 text-2xl font-semibold">Page introuvable</h2>
           <p className="mt-2 text-muted-foreground">
-            Sorry, we couldn&apos;t find the page you&apos;re looking for.
+            Cette page n&apos;existe pas ou a été déplacée.
           </p>
         </div>
         <Button asChild>
           <Link href="/">
             <Home className="mr-2 h-4 w-4" />
-            Back to Home
+            Retour à l&apos;accueil
           </Link>
         </Button>
       </div>

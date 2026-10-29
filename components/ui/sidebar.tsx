@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, VariantProps } from "class-variance-authority"
-import { PanelLeftIcon } from "lucide-react"
+import { PanelLeftIcon, XIcon } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -28,7 +29,6 @@ import {
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -181,25 +181,38 @@ function Sidebar({
   }
 
   if (isMobile) {
+    // Full-screen panel on phones. It uses the page background (no dimmed
+    // overlay) so iOS Safari tints its status bar and floating toolbar with
+    // the same color, and its background extends below the bottom edge so
+    // nothing shows through under the toolbar.
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-[calc(var(--sidebar-width)+env(safe-area-inset-left))] p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] [&>button]:hidden"
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
           side={side}
+          showOverlay={false}
+          showCloseButton={false}
+          className="bg-background text-sidebar-foreground w-full gap-0 border-0 p-0 shadow-none sm:max-w-none data-[state=closed]:duration-200 data-[state=open]:duration-300 after:absolute after:inset-x-0 after:top-full after:h-[50lvh] after:bg-background"
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>Menu</SheetTitle>
+            <SheetDescription>Navigation principale</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <div className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[max(env(safe-area-inset-bottom),0.5rem)] pl-[env(safe-area-inset-left)]">
+            {children}
+          </div>
+          <SheetClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-[calc(env(safe-area-inset-top)+0.875rem)] right-[calc(env(safe-area-inset-right)+0.75rem)] size-9"
+            >
+              <XIcon className="size-5" />
+              <span className="sr-only">Fermer le menu</span>
+            </Button>
+          </SheetClose>
         </SheetContent>
       </Sheet>
     )
@@ -274,7 +287,7 @@ function SidebarTrigger({
       {...props}
     >
       <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">Menu</span>
     </Button>
   )
 }

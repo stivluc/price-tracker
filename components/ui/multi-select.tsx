@@ -83,7 +83,7 @@ function MultiSelect({
               value={query}
               onValueChange={setQuery}
               placeholder={searchPlaceholder}
-              className="h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-9 w-full rounded-md bg-transparent px-3 py-1 text-base outline-none md:text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isMaxSelectionsReached}
             />
             <CommandList>

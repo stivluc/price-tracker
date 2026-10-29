@@ -1,336 +1,233 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  BarChart,
-  Bar,
-  AreaChart,
-  Area,
-} from 'recharts'
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
+import * as React from 'react'
+import { X } from 'lucide-react'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
-import * as React from 'react'
 import { Badge } from '@/components/ui/badge'
-import { X } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 import ForecastChart from '@/components/forecast-chart'
+import { formatShortDate } from '@/lib/format'
 
-// Define types for chart data
 type MismatchData = {
-  date: string;
-  [flowType: string]: number | string; // e.g., '2023-01-01': 120, 'Flow A': 50, 'Flow B': 70
-};
+  date: string
+  [flow: string]: number | string
+}
 
 type ComplianceData = {
-  date: string;
-  complianceRate: number;
-};
+  date: string
+  complianceRate: number
+}
 
-// Generate dummy data (replace with actual data fetching later)
+const FLOWS = ['Flux A', 'Flux B', 'Flux C', 'Flux D', 'Flux E', 'Flux F', 'Flux G', 'Flux H']
+const MAX_FLOWS = 5
+const HISTORY_DAYS = 120
+
+const dayString = (offset: number) => {
+  const d = new Date()
+  d.setDate(d.getDate() - offset)
+  return d.toISOString().slice(0, 10)
+}
+
 const generateMismatchData = (): MismatchData[] => {
-  const data: MismatchData[] = [];
-  const flows = ['Flux A', 'Flux B', 'Flux C', 'Flux D', 'Flux E', 'Flux F', 'Flux G', 'Flux H'];
-  const startDate = new Date('2023-08-01');
-
-  // Initialize base values for each flow
-  const baseValues = flows.reduce((acc, flow) => {
-    acc[flow] = Math.floor(Math.random() * 50) + 50; // Start between 50 and 100
-    return acc;
-  }, {} as Record<string, number>);
-
-  // Initialize previous values for smoothing
-  const prevValues = { ...baseValues };
-
-  for (let i = 0; i < 120; i++) {
-    const currentDate = new Date(startDate);
-    currentDate.setDate(startDate.getDate() + i);
-    const dateString = currentDate.toISOString().slice(0, 10);
-
-    const entry: MismatchData = { date: dateString };
-    flows.forEach(flow => {
-      // Generate a small random change (-5 to +5)
-      const change = (Math.random() - 0.5) * 10;
-      
-      // Apply smoothing: new value is 80% previous + 20% new target
-      const targetValue = prevValues[flow] + change;
-      const newValue = Math.round(prevValues[flow] * 0.8 + targetValue * 0.2);
-      
-      // Ensure value stays within reasonable bounds (30 to 150)
-      entry[flow] = Math.max(30, Math.min(150, newValue));
-      
-      // Update previous value for next iteration
-      prevValues[flow] = entry[flow];
-    });
-    data.push(entry);
+  const prev = Object.fromEntries(FLOWS.map((f) => [f, Math.floor(Math.random() * 50) + 50]))
+  const data: MismatchData[] = []
+  for (let i = HISTORY_DAYS - 1; i >= 0; i--) {
+    const entry: MismatchData = { date: dayString(i) }
+    for (const flow of FLOWS) {
+      const target = prev[flow] + (Math.random() - 0.5) * 10
+      const value = Math.max(30, Math.min(150, Math.round(prev[flow] * 0.8 + target * 0.2)))
+      entry[flow] = value
+      prev[flow] = value
+    }
+    data.push(entry)
   }
-  return data;
-};
+  return data
+}
 
 const generateComplianceData = (): ComplianceData[] => {
-  const data: ComplianceData[] = [];
-  const startDate = new Date('2023-08-01');
-  let currentCompliance = 85; // Start at 85%
-
-  for (let i = 0; i < 120; i++) {
-    const currentDate = new Date(startDate);
-    currentDate.setDate(startDate.getDate() + i);
-    const dateString = currentDate.toISOString().slice(0, 10);
-
-    // Simulate more pronounced variations
-    const change = (Math.random() - 0.5) * 2; // Increased variation range
-    currentCompliance = Math.max(75, Math.min(95, currentCompliance + change));
-
-    // Add occasional larger variations (every ~20 days)
-    if (i % 20 === 0) {
-      const largeChange = (Math.random() - 0.5) * 5;
-      currentCompliance = Math.max(75, Math.min(95, currentCompliance + largeChange));
-    }
-
-    data.push({
-      date: dateString,
-      complianceRate: +currentCompliance.toFixed(2),
-    });
+  const data: ComplianceData[] = []
+  let current = 85
+  for (let i = HISTORY_DAYS - 1; i >= 0; i--) {
+    current = Math.max(75, Math.min(95, current + (Math.random() - 0.5) * 2))
+    if (i % 20 === 0) current = Math.max(75, Math.min(95, current + (Math.random() - 0.5) * 5))
+    data.push({ date: dayString(i), complianceRate: +current.toFixed(2) })
   }
-  return data;
-};
+  return data
+}
 
-const allMismatchData = generateMismatchData();
-const allComplianceData = generateComplianceData();
+const flowColor = (flow: string) => `var(--chart-${FLOWS.indexOf(flow) + 1})`
 
 const complianceChartConfig = {
-  complianceRate: {
-    label: 'Taux de conformité',
-    color: 'hsl(var(--chart-1))',
-  },
-} satisfies ChartConfig;
+  complianceRate: { label: 'Taux de conformité', color: 'var(--chart-2)' },
+} satisfies ChartConfig
+
+const RANGES = { '7d': 7, '30d': 30, '90d': 90 } as const
+type Range = keyof typeof RANGES
 
 export default function EvolutionTemporellePage() {
-  const [mismatchData, setMismatchData] = React.useState<MismatchData[]>([]);
-  const [complianceData, setComplianceData] = React.useState<ComplianceData[]>([]);
-  const [timeRange, setTimeRange] = React.useState('30d');
-  const allFlows = React.useMemo(() => Object.keys(allMismatchData[0] || {}).filter(key => key !== 'date'), []);
-  const [selectedFlows, setSelectedFlows] = React.useState<string[]>(allFlows.slice(0, 3));
+  const [history, setHistory] = React.useState<{
+    mismatch: MismatchData[]
+    compliance: ComplianceData[]
+  } | null>(null)
+  const [timeRange, setTimeRange] = React.useState<Range>('30d')
+  const [selectedFlows, setSelectedFlows] = React.useState<string[]>(FLOWS.slice(0, 3))
 
+  // Generated on the client only, so the static HTML and hydration match
   React.useEffect(() => {
-    // Filter data based on time range
-    const endDate = new Date('2023-11-28');
-    let daysToSubtract = 90;
-    if (timeRange === '30d') {
-      daysToSubtract = 30;
-    } else if (timeRange === '7d') {
-      daysToSubtract = 7;
-    }
-    const startDate = new Date(endDate);
-    startDate.setDate(endDate.getDate() - daysToSubtract);
+    setHistory({ mismatch: generateMismatchData(), compliance: generateComplianceData() })
+  }, [])
 
-    const filteredMismatch = allMismatchData.filter(item => {
-      const itemDate = new Date(item.date);
-      return itemDate >= startDate && itemDate <= endDate;
-    });
+  const days = RANGES[timeRange]
+  const mismatchData = React.useMemo(() => history?.mismatch.slice(-days) ?? [], [history, days])
+  const complianceData = React.useMemo(() => history?.compliance.slice(-days) ?? [], [history, days])
 
-    const filteredCompliance = allComplianceData.filter(item => {
-       const itemDate = new Date(item.date);
-       return itemDate >= startDate && itemDate <= endDate;
-    });
+  const mismatchChartConfig = React.useMemo(
+    () =>
+      Object.fromEntries(
+        selectedFlows.map((flow) => [flow, { label: flow, color: flowColor(flow) }])
+      ) as ChartConfig,
+    [selectedFlows]
+  )
 
-    // Filter flows within the data points based on selectedFlows state
-    const processedMismatchData = filteredMismatch.map(item => {
-      const newItem: MismatchData = { date: item.date };
-      selectedFlows.forEach(flow => {
-        if (item[flow] !== undefined) {
-          newItem[flow] = item[flow];
-        }
-      });
-      return newItem;
-    });
-
-    setMismatchData(processedMismatchData);
-    setComplianceData(filteredCompliance);
-
-  }, [timeRange, selectedFlows, allFlows]);
-
-  // Dynamically generate mismatch chart config based on selected flows
-  const mismatchChartConfig = React.useMemo(() => {
-    return selectedFlows.reduce((config, flowType, index) => {
-      config[flowType] = {
-        label: flowType,
-        color: `var(--chart-${index + 1})`,
-      };
-      return config;
-    }, {} as ChartConfig);
-  }, [selectedFlows]);
-
-  // Prepare items for MultiSelect
-  const flowMultiSelectItems = React.useMemo(() => {
-    return allFlows.map(flow => ({ label: flow, value: flow }));
-  }, [allFlows]);
+  const flowItems = React.useMemo(() => FLOWS.map((flow) => ({ label: flow, value: flow })), [])
 
   return (
-    <div className='flex flex-col gap-4 px-4 py-4 lg:px-6'>
-      <h1 className='ml-2 mt-2 text-2xl font-bold'>Évolution temporelle</h1>
+    <div className='@container/main flex flex-col gap-4 p-4 lg:gap-6 lg:p-6'>
+      <PageHeader title='Évolution temporelle'>
+        <Select value={timeRange} onValueChange={(v) => setTimeRange(v as Range)}>
+          <SelectTrigger className='w-[172px]' aria-label='Période'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align='end'>
+            <SelectItem value='7d'>7 derniers jours</SelectItem>
+            <SelectItem value='30d'>30 derniers jours</SelectItem>
+            <SelectItem value='90d'>90 derniers jours</SelectItem>
+          </SelectContent>
+        </Select>
+      </PageHeader>
 
-      {/* Time Series Chart: Mismatches per day per flow */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Nombre de mismatches par jour et par flux</CardTitle>
-          <div className="flex items-center gap-4">
-            <MultiSelect
-              items={flowMultiSelectItems}
-              selected={selectedFlows.slice(0,5)}
-              onSelectedChange={(newSelected) => setSelectedFlows(newSelected.slice(0,5))}
-              placeholder="Sélectionner les flux"
-              searchPlaceholder="Rechercher un flux..."
-              emptyText="Aucun flux trouvé."
-              labelKey="label"
-              valueKey="value"
-              className="w-[200px]"
-              maxSelections={5}
-            />
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Sélectionner période" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">Derniers 7 jours</SelectItem>
-                <SelectItem value="30d">Derniers 30 jours</SelectItem>
-                <SelectItem value="90d">Derniers 90 jours</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <CardHeader>
+          <CardTitle>Mismatches par jour et par flux</CardTitle>
+          <CardDescription>Jusqu&apos;à {MAX_FLOWS} flux comparés</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {selectedFlows.map((value) => {
-              const item = flowMultiSelectItems.find(item => item.value === value);
-              return item ? (
-                <Badge
-                  key={value}
-                  variant="secondary"
-                  className="flex items-center gap-1"
+        <CardContent className='flex flex-col gap-4'>
+          <div className='flex flex-wrap items-center gap-2'>
+            {selectedFlows.map((flow) => (
+              <Badge key={flow} variant='outline' className='h-8 gap-1.5 pr-1 pl-2.5 text-xs'>
+                <span className='size-2 rounded-[2px]' style={{ backgroundColor: flowColor(flow) }} />
+                {flow}
+                <button
+                  type='button'
+                  className='text-muted-foreground hover:text-foreground hover:bg-muted pointer-events-auto rounded-sm p-1'
+                  aria-label={`Retirer ${flow}`}
+                  onClick={() => setSelectedFlows(selectedFlows.filter((f) => f !== flow))}
                 >
-                  {item.label}
-                  <button
-                    type="button"
-                    className="shrink-0"
-                    onClick={() => {
-                      setSelectedFlows(selectedFlows.filter((item) => item !== value));
-                    }}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ) : null;
-            })}
+                  <X className='size-3.5' />
+                </button>
+              </Badge>
+            ))}
+            {selectedFlows.length < MAX_FLOWS && (
+              <MultiSelect
+                items={flowItems}
+                selected={selectedFlows}
+                onSelectedChange={(next) => setSelectedFlows(next.slice(0, MAX_FLOWS))}
+                placeholder='Ajouter un flux'
+                searchPlaceholder='Rechercher...'
+                emptyText='Aucun flux trouvé.'
+                labelKey='label'
+                valueKey='value'
+                className='w-40'
+                maxSelections={MAX_FLOWS}
+              />
+            )}
           </div>
-          <ChartContainer config={mismatchChartConfig} className="aspect-auto h-[300px] w-full">
-            <BarChart data={mismatchData}>
-              <CartesianGrid strokeDasharray='3 3' />
+          <ChartContainer config={mismatchChartConfig} className='aspect-auto h-[220px] w-full sm:h-[300px]'>
+            <BarChart data={mismatchData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <CartesianGrid vertical={false} />
               <XAxis
                 dataKey='date'
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                interval={timeRange === '90d' ? 14 : timeRange === '30d' ? 5 : 1}
-                tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-                }}
+                minTickGap={24}
+                tickFormatter={formatShortDate}
               />
-              <YAxis />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              {selectedFlows.map((flowType, index) => (
+              <YAxis width={36} tickLine={false} axisLine={false} />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
+              />
+              {selectedFlows.map((flow, index) => (
                 <Bar
-                  key={flowType}
-                  dataKey={flowType}
-                  fill={`var(--chart-${index + 1})`}
-                  stackId="a"
+                  key={flow}
+                  dataKey={flow}
+                  stackId='a'
+                  fill={flowColor(flow)}
+                  radius={index === selectedFlows.length - 1 ? [2, 2, 0, 0] : 0}
                 />
               ))}
-              <ChartLegend 
-                content={({ payload }) => (
-                  <div className="flex flex-wrap gap-4 justify-center mt-4">
-                    {payload?.map((entry) => {
-                      const flowType = entry.value as string;
-                      const config = mismatchChartConfig[flowType];
-                      return (
-                        <div key={flowType} className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-sm" 
-                            style={{ backgroundColor: `var(--chart-${selectedFlows.indexOf(flowType) + 1})` }}
-                          />
-                          <span className="text-sm">{config?.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              />
             </BarChart>
           </ChartContainer>
         </CardContent>
       </Card>
 
-      {/* Compliance Rate Chart: Rolling 7-day */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="h-full flex flex-col">
+      <div className='grid grid-cols-1 gap-4 lg:gap-6 @4xl/main:grid-cols-2'>
+        <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Taux de conformité rolling 7 jours</CardTitle>
-            <CardDescription className="text-muted-foreground">Évolution du taux de conformité sur les 7 derniers jours.</CardDescription>
+            <CardTitle>Taux de conformité</CardTitle>
+            <CardDescription>Moyenne glissante sur 7 jours</CardDescription>
           </CardHeader>
-          <CardContent className="flex-grow">
-            <ChartContainer config={complianceChartConfig} className="h-full w-full">
-              <AreaChart data={complianceData}>
+          <CardContent className='flex flex-1 flex-col'>
+            <ChartContainer config={complianceChartConfig} className='aspect-auto min-h-[200px] w-full flex-1 sm:min-h-[240px]'>
+              <AreaChart data={complianceData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="complianceGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.1} />
+                  <linearGradient id='complianceGradient' x1='0' y1='0' x2='0' y2='1'>
+                    <stop offset='5%' stopColor='var(--color-complianceRate)' stopOpacity={0.4} />
+                    <stop offset='95%' stopColor='var(--color-complianceRate)' stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray='3 3' />
+                <CartesianGrid vertical={false} />
                 <XAxis
                   dataKey='date'
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
-                  interval={timeRange === '90d' ? 14 : timeRange === '30d' ? 5 : 1}
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-                  }}
+                  minTickGap={24}
+                  tickFormatter={formatShortDate}
                 />
-                <YAxis 
-                  domain={[70, 100]} 
-                  label={{ value: 'Taux (%)', angle: -90, position: 'insideLeft' }} 
-                  tickCount={7}
+                <YAxis
+                  width={44}
+                  domain={[70, 100]}
+                  ticks={[70, 80, 90, 100]}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => `${v}\u00a0%`}
                 />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
+                />
                 <Area
-                  type="monotone"
-                  dataKey="complianceRate"
-                  fill="url(#complianceGradient)"
-                  stroke="var(--chart-1)"
+                  type='monotone'
+                  dataKey='complianceRate'
+                  fill='url(#complianceGradient)'
+                  stroke='var(--color-complianceRate)'
+                  strokeWidth={2}
                   dot={false}
-                  activeDot={false}
                 />
-                <ChartLegend content={<ChartLegendContent />} />
               </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
 
-        {/* Forecasting Area */}
         <ForecastChart />
       </div>
     </div>
-  );
+  )
 }

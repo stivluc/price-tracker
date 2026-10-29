@@ -133,6 +133,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Explicit page background on html and body: iOS 26 Safari tints the
+     status bar and toolbar from it (theme-color is ignored there). */
+  html {
+    background-color: var(--background);
+    color-scheme: light;
+  }
   body {
     @apply bg-background text-foreground;
   }

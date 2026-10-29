@@ -32,41 +32,41 @@ export function LoginForm({
   return (
     <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Login to your account</h1>
+        <h1 className="text-2xl font-bold">Connexion</h1>
         <p className="text-muted-foreground text-sm text-balance">
-          Enter your email below to login to your account
+          Saisissez votre e-mail pour accéder au tableau de bord
         </p>
       </div>
       <div className="flex gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
-          <span className="font-medium">Demo:</span> there is no real authentication.
-          Enter any email and password, or use the Microsoft button.
+          <span className="font-medium">Démo :</span> aucune authentification réelle.
+          Saisissez n&apos;importe quel e-mail et mot de passe, ou utilisez le bouton Microsoft.
         </p>
       </div>
       <div className="grid gap-6">
         <div className="grid gap-3">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" placeholder="m@castorama.com" required />
+          <Label htmlFor="email">E-mail</Label>
+          <Input id="email" name="email" type="email" placeholder="nom@exemple.com" required />
         </div>
         <div className="grid gap-3">
           <div className="flex items-center">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Mot de passe</Label>
             <a
               href="#"
               className="ml-auto text-sm underline-offset-4 hover:underline"
             >
-              Forgot your password?
+              Mot de passe oublié ?
             </a>
           </div>
           <Input id="password" name="password" type="password" required />
         </div>
         <Button type="submit" className="w-full">
-          Login
+          Se connecter
         </Button>
         <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
           <span className="bg-background text-muted-foreground relative z-10 px-2">
-            Or continue with
+            Ou continuer avec
           </span>
         </div>
         <Button 
@@ -81,13 +81,13 @@ export function LoginForm({
               fill="currentColor"
             />
           </svg>
-          Login with Microsoft Exchange
+          Se connecter avec Microsoft
         </Button>
       </div>
       <div className="text-center text-sm">
-        Don&apos;t have an account?{" "}
+        Pas encore de compte ?{" "}
         <a href="#" className="underline underline-offset-4">
-          Sign up
+          Créer un compte
         </a>
       </div>
     </form>

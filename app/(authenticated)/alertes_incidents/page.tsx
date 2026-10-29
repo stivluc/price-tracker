@@ -18,6 +18,7 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -54,8 +55,6 @@ import { IconFileTypeCsv, IconFileTypePdf } from '@tabler/icons-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   ChartConfig,
@@ -67,6 +66,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { PageHeader } from '@/components/page-header'
+import { formatDecimal, formatShortDate } from '@/lib/format'
 
 export interface AlertIncident {
   id: number
@@ -88,7 +89,7 @@ export interface TimelineEntry {
 
 // Generate dummy alerts
 const generateAlerts = (): AlertIncident[] => {
-  const flows = ['Flow A', 'Flow B', 'Flow C']
+  const flows = ['Flux A', 'Flux B', 'Flux C']
   const sites = ['Site 1', 'Site 2', 'Site 3']
   const urgencies: AlertIncident['urgency'][] = ['Info', 'Avertissement', 'Critique']
   const statuses: AlertIncident['status'][] = ['Nouveau', 'En cours', 'Résolu']
@@ -98,7 +99,7 @@ const generateAlerts = (): AlertIncident[] => {
     const flow = flows[Math.floor(Math.random() * flows.length)]
     const site = sites[Math.floor(Math.random() * sites.length)]
     const nb = Math.floor(Math.random() * 30) + 1
-    const threshold = `> ${(Math.random() * 19 + 1).toFixed(2)} €`
+    const threshold = `> ${formatDecimal(Math.random() * 19 + 1)} €`
     const urgency = urgencies[Math.floor(Math.random() * urgencies.length)]
     const status = statuses[Math.floor(Math.random() * statuses.length)]
     const date = new Date(Date.now() - Math.random() * 30 * 86400000).toISOString()
@@ -121,6 +122,15 @@ const generateAlerts = (): AlertIncident[] => {
 }
 
 // Incident timeline data
+const formatDateTime = (value: string) =>
+  new Date(value).toLocaleString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
 const generateTimeline = (): TimelineEntry[] => {
   const data: TimelineEntry[] = []
   const now = new Date()
@@ -183,13 +193,12 @@ export default function AlertesIncidentsPage() {
         header: ({ column }) => (
           <SortableColumnHeader column={column} title='Date alerte' />
         ),
-        cell: ({ row }) =>
-          new Date(row.getValue<string>('date')).toLocaleString('fr-FR'),
+        cell: ({ row }) => formatDateTime(row.getValue<string>('date')),
       },
       {
         accessorKey: 'flowType',
         header: ({ column }) => (
-          <SortableColumnHeader column={column} title='Flow' />
+          <SortableColumnHeader column={column} title='Flux' />
         ),
       },
       {
@@ -267,7 +276,9 @@ export default function AlertesIncidentsPage() {
             variant='ghost'
             size='icon'
             className='hover:bg-muted/50'
-            onClick={() => {
+            aria-label='Voir le ticket'
+            onClick={(event) => {
+              event.stopPropagation()
               setSelected(row.original)
               setOpen(true)
             }}
@@ -302,24 +313,24 @@ export default function AlertesIncidentsPage() {
   })
 
   const chartConfig: ChartConfig = {
-    count: { label: 'Incidents', color: 'hsl(var(--chart-1))' },
+    count: { label: 'Incidents', color: 'var(--chart-1)' },
   }
 
   const exportCSV = () => {
     setIsDownloading(true)
-    const headers = ['Date alerte', 'Flow', 'Site', 'Nb mismatches', 'Seuil configuré', 'Urgence', 'Statut']
+    const headers = ['Date alerte', 'Flux', 'Site', 'Nb mismatches', 'Seuil configuré', 'Urgence', 'Statut']
     const rows = table
       .getFilteredRowModel()
       .rows.map((row: { original: AlertIncident }) => [
-        new Date(row.original.date).toLocaleString('fr-FR'),
+        formatDateTime(row.original.date),
         row.original.flowType,
         row.original.site,
         row.original.nbMismatches,
         row.original.threshold,
         row.original.urgency,
         row.original.status,
-      ].join(','))
-    const csvContent = [headers.join(','), ...rows].join('\n')
+      ].join(';'))
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -341,30 +352,32 @@ export default function AlertesIncidentsPage() {
   }
 
   return (
-    <div className='px-4 lg:px-6 pb-8'>
-      <h1 className='ml-2 mt-6 text-2xl font-bold'>Alertes et incidents</h1>
+    <div className='flex flex-col gap-4 p-4 lg:gap-6 lg:p-6'>
+      <PageHeader title='Alertes et incidents' />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className='max-w-xl'>
+        <DialogContent>
           {selected && (
             <>
-              <DialogHeader>
+              <DialogHeader className='text-left'>
                 <DialogTitle>Incident #{selected.id}</DialogTitle>
+                <DialogDescription>{formatDateTime(selected.date)}</DialogDescription>
               </DialogHeader>
-              <p className='text-sm'>Flow: {selected.flowType}</p>
-              <p className='text-sm'>Site: {selected.site}</p>
-              <p className='text-sm'>Nb mismatches: {selected.nbMismatches}</p>
-              <p className='text-sm'>Seuil: {selected.threshold}</p>
-              <p className='text-sm'>Urgence: {selected.urgency}</p>
-              <p className='text-sm'>Statut: {selected.status}</p>
-              <a
-                href='#'
-                target='_blank'
-                className='text-sm text-primary underline'
-              >
-                Ouvrir le ticket
-              </a>
-              <DialogFooter className='mt-4 flex flex-wrap gap-2 sm:justify-end'>
+              <dl className='grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm'>
+                <dt className='text-muted-foreground'>Flux</dt>
+                <dd>{selected.flowType}</dd>
+                <dt className='text-muted-foreground'>Site</dt>
+                <dd>{selected.site}</dd>
+                <dt className='text-muted-foreground'>Nb mismatches</dt>
+                <dd>{selected.nbMismatches}</dd>
+                <dt className='text-muted-foreground'>Seuil</dt>
+                <dd>{selected.threshold}</dd>
+                <dt className='text-muted-foreground'>Urgence</dt>
+                <dd>{selected.urgency}</dd>
+                <dt className='text-muted-foreground'>Statut</dt>
+                <dd>{selected.status}</dd>
+              </dl>
+              <DialogFooter className='gap-2'>
                 <Button
                   variant='secondary'
                   onClick={() => {
@@ -415,7 +428,7 @@ export default function AlertesIncidentsPage() {
       </AlertDialog>
 
       {/* Filters Section */}
-      <div className='grid grid-cols-2 gap-2 py-4 sm:flex sm:flex-wrap sm:items-end sm:gap-4'>
+      <div className='grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-4'>
         <Input
           placeholder='Recherche...'
           value={table.getState().globalFilter ?? ''}
@@ -427,13 +440,13 @@ export default function AlertesIncidentsPage() {
           value={(table.getColumn('flowType')?.getFilterValue() as string) ?? 'all'}
         >
           <SelectTrigger className='w-full sm:w-40'>
-            <SelectValue placeholder='Flow' />
+            <SelectValue placeholder='Flux' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='all'>Tous les flows</SelectItem>
-            <SelectItem value='Flow A'>Flow A</SelectItem>
-            <SelectItem value='Flow B'>Flow B</SelectItem>
-            <SelectItem value='Flow C'>Flow C</SelectItem>
+            <SelectItem value='all'>Tous les flux</SelectItem>
+            <SelectItem value='Flux A'>Flux A</SelectItem>
+            <SelectItem value='Flux B'>Flux B</SelectItem>
+            <SelectItem value='Flux C'>Flux C</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -513,6 +526,7 @@ export default function AlertesIncidentsPage() {
       </div>
 
       {/* Alerts Table */}
+      <div>
       <div className="-mx-4 border-y sm:mx-0 sm:rounded-md sm:border">
         <Table>
           <TableHeader>
@@ -555,36 +569,40 @@ export default function AlertesIncidentsPage() {
           </TableBody>
         </Table>
       </div>
-        <DataTablePagination table={table} />
+      <DataTablePagination table={table} />
+      </div>
 
       {/* Timeline Chart */}
-      <h2 className='ml-2 mt-8 text-lg font-bold'>Chronologie des incidents</h2>
-      <Card className='mt-4'>
-        <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-          <div>
-            <CardTitle className='text-sm font-medium'>Incidents sur 30 jours</CardTitle>
-            <CardDescription className='text-muted-foreground'>Rolling 7j : {rolling7} incidents</CardDescription>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Chronologie des incidents</CardTitle>
+          <CardDescription>
+            30 derniers jours, dont {rolling7} sur les 7 derniers jours
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className='h-[300px] w-full'>
-            <BarChart data={timeline}>
-              <CartesianGrid strokeDasharray='3 3' />
+        <CardContent className='px-2 sm:px-6'>
+          <ChartContainer config={chartConfig} className='aspect-auto h-[200px] w-full sm:h-[260px]'>
+            <BarChart data={timeline} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <CartesianGrid vertical={false} />
               <XAxis
                 dataKey='date'
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                interval={5}
-                tickFormatter={value => {
-                  const date = new Date(value)
-                  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-                }}
+                minTickGap={24}
+                tickFormatter={formatShortDate}
               />
-              <YAxis />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-              <Bar dataKey='count' fill='var(--chart-1)' />
-              <ChartLegend content={<ChartLegendContent />} />
+              <YAxis
+                width={28}
+                tickLine={false}
+                axisLine={false}
+                allowDecimals={false}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent labelFormatter={(value) => formatShortDate(value)} />}
+              />
+              <Bar dataKey='count' fill='var(--color-count)' radius={[3, 3, 0, 0]} />
             </BarChart>
           </ChartContainer>
         </CardContent>

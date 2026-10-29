@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { DemoNotice } from "@/components/demo-notice";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s | Demo - Price Tracker"
   },
   description: "Price reconciliation tool. Monitor and resolve price discrepancies across different data flows.",
-  keywords: ["price reconciliation", "price monitoring", "price discrepancies", "internal tool", "castorama", "price tracker"],
+  keywords: ["price reconciliation", "price monitoring", "price discrepancies", "internal tool", "price tracker"],
   authors: [{ name: "Steven Lucas" }],
   creator: "Steven Lucas",
   publisher: "Steven Lucas",
@@ -95,14 +96,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
           <SidebarProvider>
-              {children}
+            {children}
           </SidebarProvider>
+          <DemoNotice />
         </AuthProvider>
       </body>
     </html>

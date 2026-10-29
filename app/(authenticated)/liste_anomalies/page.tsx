@@ -47,6 +47,8 @@ import {
   IconFileTypeCsv,
   IconFileTypePdf,
 } from '@tabler/icons-react'
+import { PageHeader } from '@/components/page-header'
+import { formatEuro, formatPercent } from '@/lib/format'
 
 type Anomaly = {
   id: number
@@ -63,14 +65,15 @@ type Anomaly = {
 
 const generateData = (): Anomaly[] => {
   const sites = ['Site 1', 'Site 2', 'Site 3']
-  const flows = ['Flow A', 'Flow B', 'Flow C']
-  const statuses: Anomaly['status'][] = ['Alerte', 'Critique']
+  const flows = ['Flux A', 'Flux B', 'Flux C']
   const data: Anomaly[] = []
 
   for (let i = 1; i <= 100; i++) {
-    const priceSource = +(Math.random() * 100).toFixed(2)
-    const priceTarget = +(Math.random() * 100).toFixed(2)
-    const delta = +(priceTarget - priceSource).toFixed(2)
+    const priceSource = +(Math.random() * 95 + 5).toFixed(2)
+    // Relative gap between the two flows, between 5 % and 45 % either way
+    const gap = (Math.random() * 40 + 5) * (Math.random() < 0.5 ? -1 : 1)
+    const priceTarget = +(priceSource * (1 + gap / 100)).toFixed(2)
+    const delta = +(((priceTarget - priceSource) / priceSource) * 100).toFixed(2)
     const ean = Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0')
 
     data.push({
@@ -85,7 +88,7 @@ const generateData = (): Anomaly[] => {
       validityDate: new Date(
         Date.now() - Math.floor(Math.random() * 10000000000)
       ).toISOString().slice(0, 10),
-      status: statuses[Math.floor(Math.random() * statuses.length)],
+      status: Math.abs(delta) > 30 ? 'Critique' : 'Alerte',
     })
   }
   return data
@@ -142,7 +145,7 @@ export default function ListeAnomaliesPage() {
       {
         accessorKey: 'flowType',
         header: ({ column }) => (
-          <SortableColumnHeader column={column} title='Flow' />
+          <SortableColumnHeader column={column} title='Flux' />
         ),
       },
       {
@@ -150,22 +153,27 @@ export default function ListeAnomaliesPage() {
         header: ({ column }) => (
           <SortableColumnHeader column={column} title='Prix source' />
         ),
+        cell: ({ row }) => formatEuro(row.getValue<number>('priceSource')),
       },
       {
         accessorKey: 'priceTarget',
         header: ({ column }) => (
           <SortableColumnHeader column={column} title='Prix cible' />
         ),
+        cell: ({ row }) => formatEuro(row.getValue<number>('priceTarget')),
       },
       {
         accessorKey: 'delta',
         header: ({ column }) => (
           <SortableColumnHeader column={column} title='Delta' />
         ),
-        cell: ({ row }) => `${row.getValue<number>('delta').toFixed(2)}%`,
+        cell: ({ row }) => {
+          const delta = row.getValue<number>('delta')
+          return `${delta > 0 ? '+' : ''}${formatPercent(delta, 2)}`
+        },
         filterFn: (row, columnId, value) => {
-          const deltaValue = row.getValue<number>(columnId)
-          return deltaValue > parseFloat(value)
+          const min = parseFloat(value)
+          return Number.isNaN(min) || Math.abs(row.getValue<number>(columnId)) > min
         },
       },
       {
@@ -173,6 +181,7 @@ export default function ListeAnomaliesPage() {
         header: ({ column }) => (
           <SortableColumnHeader column={column} title='Date de validité' />
         ),
+        cell: ({ row }) => new Date(row.getValue<string>('validityDate')).toLocaleDateString('fr-FR'),
       },
       {
         accessorKey: 'status',
@@ -243,19 +252,23 @@ export default function ListeAnomaliesPage() {
 
   const exportCSV = () => {
     setIsDownloading(true)
-    // Explicitly filter for columns with accessorKey and cast them
-    const dataColumns = columns.filter(
-      (column): column is ColumnDef<Anomaly> & { accessorKey: keyof Anomaly } =>
-      'accessorKey' in column && column.accessorKey !== undefined
-    );
-
-    const headers = dataColumns.map(column => String(column.header)).join(',');
-
+    const csvColumns: [keyof Anomaly, string][] = [
+      ['articleNumber', 'Article'],
+      ['ean', 'EAN'],
+      ['site', 'Site'],
+      ['flowType', 'Flux'],
+      ['priceSource', 'Prix source'],
+      ['priceTarget', 'Prix cible'],
+      ['delta', 'Delta (%)'],
+      ['validityDate', 'Date de validité'],
+      ['status', 'Statut'],
+    ]
+    const headers = csvColumns.map(([, label]) => label).join(';')
     const rows = table.getFilteredRowModel().rows.map(row =>
-        dataColumns.map(column => String(row.getValue(column.accessorKey))).join(',')
-    );
+      csvColumns.map(([key]) => String(row.original[key])).join(';')
+    )
 
-    const csvContent = [headers, ...rows].join('\n');
+    const csvContent = '\uFEFF' + [headers, ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -281,8 +294,8 @@ export default function ListeAnomaliesPage() {
   }
 
   return (
-    <div className='px-4 lg:px-6'>
-      <h1 className='text-2xl font-bold ml-2 mt-6'>Liste des anomalies</h1>
+    <div className='flex flex-col gap-4 p-4 lg:gap-6 lg:p-6'>
+      <PageHeader title='Liste des anomalies' />
 
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
@@ -298,7 +311,7 @@ export default function ListeAnomaliesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className='grid grid-cols-2 gap-2 py-4 sm:flex sm:flex-wrap sm:items-end sm:gap-4'>
+      <div className='grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-4'>
         <Input
           placeholder='Rechercher par article ou EAN...'
           value={globalFilter ?? ''}
@@ -314,9 +327,9 @@ export default function ListeAnomaliesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value='all'>Tous les flux</SelectItem>
-            <SelectItem value='Flow A'>Flow A</SelectItem>
-            <SelectItem value='Flow B'>Flow B</SelectItem>
-            <SelectItem value='Flow C'>Flow C</SelectItem>
+            <SelectItem value='Flux A'>Flux A</SelectItem>
+            <SelectItem value='Flux B'>Flux B</SelectItem>
+            <SelectItem value='Flux C'>Flux C</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -335,7 +348,8 @@ export default function ListeAnomaliesPage() {
         </Select>
         <Input
           type='number'
-          placeholder='Delta > X'
+          inputMode='decimal'
+          placeholder='Delta > X %'
           value={(table.getColumn('delta')?.getFilterValue() as string) ?? ''}
           onChange={(event) =>
             table.getColumn('delta')?.setFilterValue(event.target.value)
@@ -389,6 +403,7 @@ export default function ListeAnomaliesPage() {
         </div>
       </div>
 
+      <div>
       <div className="-mx-4 border-y sm:mx-0 sm:rounded-md sm:border">
         <Table>
           <TableHeader>
@@ -442,6 +457,7 @@ export default function ListeAnomaliesPage() {
         </Table>
       </div>
       <DataTablePagination table={table} />
+      </div>
     </div>
   )
 }
