@@ -54,10 +54,13 @@ export function DemoNotice() {
           <DialogDescription asChild>
             <div className="space-y-2">
               <p>
-                Ce tableau de bord a été conçu comme prototype pour un projet
-                mené auprès de Castorama. Il permet de repérer et de traiter
-                efficacement les écarts de prix entre différents flux, et
-                d&apos;alerter lorsqu&apos;un seuil est dépassé.
+                Ce tableau de bord est un prototype de démonstration réalisé
+                pour un projet à l&apos;étude avec Castorama en 2024.
+              </p>
+              <p>
+                L&apos;objectif était de repérer et de traiter efficacement les
+                écarts de prix entre différents flux, et d&apos;alerter
+                lorsqu&apos;un seuil est dépassé.
               </p>
               <p>Toutes les données sont fictives et générées automatiquement.</p>
               <p>Cette démo n&apos;est pas affiliée à Castorama.</p>
