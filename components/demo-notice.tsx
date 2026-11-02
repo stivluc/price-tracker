@@ -20,7 +20,7 @@ export function DemoNotice() {
   useEffect(() => {
     let seen = false
     try {
-      seen = window.localStorage.getItem(STORAGE_KEY) === "1"
+      seen = window.sessionStorage.getItem(STORAGE_KEY) === "1"
     } catch {
       // Storage unavailable (private mode, blocked cookies): show the notice anyway.
     }
@@ -31,7 +31,7 @@ export function DemoNotice() {
     setOpen(next)
     if (!next) {
       try {
-        window.localStorage.setItem(STORAGE_KEY, "1")
+        window.sessionStorage.setItem(STORAGE_KEY, "1")
       } catch {
         // Ignore: the notice will simply show again next time.
       }
